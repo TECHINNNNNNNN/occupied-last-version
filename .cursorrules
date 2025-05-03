@@ -1,0 +1,102 @@
+# Chulalongkorn Engineering Library Occupancy System
+
+## Project Overview
+
+This system helps students and faculty monitor, book, and manage library spaces through a web-based platform with real-time updates. The system prioritizes same-day bookings only for equitable access, with an intuitive visual timeline interface replacing checkbox selection.
+
+## Technology Stack
+
+### Frontend
+
+- Next.js App Router with TypeScript
+- Tailwind CSS for styling
+- shadcn/ui component library
+- React Hook Form with Zod for form validation
+- Tanstack Query for data fetching
+- react-calendar-timeline for visual room booking
+- date-fns for date manipulation
+- Framer Motion for animations
+
+### Backend & Database
+
+- Supabase for authentication and database
+- Supabase Realtime for live updates
+- Row Level Security (RLS) for data protection
+- Next.js API routes for additional server functions
+
+## Code Style & Structure
+
+- Use TypeScript strictly with proper interfaces and types
+- Prefer functional components over class components
+- Use descriptive variable names with auxiliary verbs (isLoading, hasError)
+- Structure files logically: exported component, subcomponents, helpers, types
+- Write concise, technical code with accurate examples
+- Avoid code duplication through modularization
+- Place static content at the end of files
+
+## Naming Conventions
+
+- Use lowercase with dashes for directories (components/room-card)
+- Use PascalCase for component files (RoomCard.tsx)
+- Prefer named exports for components
+- Use camelCase for variables, functions, and instances
+
+## Performance Optimization
+
+- Minimize client-side components and state
+- Use React Server Components when possible
+- Implement proper loading states and skeletons
+- Optimize images with Next.js Image component
+- Implement efficient data fetching patterns
+
+## Database Schema Guidelines
+
+- Rooms table: id, name, capacity, has_projector, location
+- Reservations table: id, room_id, user_id, start_time, end_time, date, agenda, attendees_count
+- Enforce database-level constraints to prevent overlapping reservations
+- Implement Row Level Security policies for data protection
+
+## Reservation System Architecture
+
+- Same-day only reservation policy
+- Visual timeline interface instead of checkboxes
+- Real-time updates using Supabase subscriptions
+- Temporary reservation holds during booking process (30 seconds max)
+- Graceful conflict resolution for concurrent bookings
+
+## Error Handling
+
+- Implement proper error boundaries
+- Provide helpful error messages for users
+- Use toast notifications for feedback
+- Handle edge cases gracefully
+- Validate all user inputs
+
+## Data Fetching Strategy
+
+- Cache room metadata aggressively
+- Frequent refreshes for today's availability data
+- Subscribe to real-time updates for all today's bookings
+- Clear system reset at midnight for next day's availability
+
+## UI/UX Guidelines
+
+- Clean, modern design that prioritizes usability
+- Responsive layouts that work well on mobile and desktop
+- Visual indicators for room status (available, booked, in progress)
+- Drag-to-select functionality for time ranges
+- Clear indication of current time in timeline view
+
+# Communication Guidelines
+
+- If my request is unclear or you need more information, always ask me clarifying questions before taking action.
+- Do not proceed with assumptions if there is any ambiguity in my instructions.
+
+# Package Installation Guidelines
+
+- **Never run terminal commands** to install packages (e.g., `npm install`, `pip install`).
+- If a library is required for the task:
+  1. Explicitly list the needed packages
+  2. Explain why they’re necessary
+  3. Provide the exact install command(s)
+  4. Wait for my confirmation before proceeding

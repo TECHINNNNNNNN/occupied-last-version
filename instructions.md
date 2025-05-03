@@ -4,7 +4,7 @@
 
 The Chulalongkorn Engineering Library Occupancy System is a web-based platform designed to help students and faculty monitor, analyze, and manage library space utilization in real-time. The system provides users with up-to-date information on library occupancy levels, allows for room reservations, facilitates student communication, and offers analytical insights into usage patterns.
 
-The interface features a modern, minimalist design with subtle Y2K-inspired aesthetic elements that create a unique and engaging user experience.
+The interface features a clean, modern design that prioritizes usability and functionality.
 
 ### Vision
 
@@ -22,8 +22,7 @@ To create a comprehensive digital solution that optimizes library space utilizat
 
 ### 1. User Authentication and Profiles
 
-- Nextauthjs
-- Integration with university single sign-on (SSO) system
+- Supabase Authentication
 - Role-based access control (student, faculty, staff, admin)
 - Profile management with privacy settings
 - Activity history and preference settings
@@ -39,10 +38,10 @@ To create a comprehensive digital solution that optimizes library space utilizat
 ### 3. Room Reservation System
 
 - Real-time tracking of room availability
-- Intuitive room selection interface
-- Date and time selection with availability indicators
+- Intuitive room selection interface with visual timeline
+- Same-day only reservation policy for equitable access
 - Reservation confirmation and modification
-- Calendar integration
+- Drag-to-select time range functionality
 
 ### 4. Student Communication Platform
 
@@ -64,24 +63,45 @@ To create a comprehensive digital solution that optimizes library space utilizat
 
 ### Frontend
 
-- Next.js (React)
-- Tailwind CSS with custom theme
-- React Context API and SWR for data fetching
-- shandcn ui
-- Superbase database
-- Recharts for visualizations
+- Next.js (App Router)
+- TypeScript for type safety
+- Tailwind CSS
+- shadcn/ui for component library
+- React Hook Form for form handling
+- Tanstack Query for data fetching and caching
 - Framer Motion for animations
+- react-calendar-timeline for room reservation visualization
+- @dnd-kit/core for drag-and-drop functionality
+- date-fns for date manipulation
+- react-hot-toast for notifications
 
-### Backend
+### Backend & Database
 
-- Next.js API routes
-- NextAuth.js with university SSO integration
-- WebSockets for real-time occupancy data
+- Supabase for authentication and database
+- Supabase Row Level Security (RLS) for data protection
+- Supabase Realtime for live updates
+- Supabase Storage for file uploads
+- Supabase Edge Functions for serverless operations
+- Next.js API routes for additional server functions
 
-### Database
+### Data Visualization
 
-- PostgreSQL for relational data
-- TimescaleDB for occupancy metrics
-- Redis for caching and performance optimization
+- Recharts for standard visualizations
+- Nivo for advanced data visualization
+- react-grid-layout for customizable dashboards
 
-This project will be implemented in four phases over a 12-month period, starting with core system development and gradually adding enhanced features, integrations, and optimizations.
+### Performance & Optimization
+
+- Next.js Image component for optimized images
+- Vercel Analytics for performance monitoring
+- use-debounce for search and filter optimization
+- Supabase caching strategies
+- Incremental Static Regeneration for static pages
+
+### Development & Deployment
+
+- ESLint and Prettier for code quality
+- Jest and React Testing Library for testing
+- GitHub Actions for CI/CD
+- Vercel for deployment
+- Sentry for error tracking
