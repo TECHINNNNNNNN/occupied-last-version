@@ -11,6 +11,8 @@ import { toast } from 'sonner'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const { signIn, signUp } = useAuth()
@@ -19,33 +21,93 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
     try {
       if (mode === 'login') {
         const { error } = await signIn(email, password)
-        if (error) throw error
+        if (error) {
+          if (error.message.includes('Email not confirmed')) {
+            toast.error('Please check your email and confirm your account before logging in')
+          } else if (error.message.includes('Invalid login credentials')) {
+            toast.error('Invalid email or password')
+          } else if (error.message.includes('Password should be')) {
+            toast.error('Password must be at least 6 characters')
+          } else {
+            toast.error(error.message || 'Authentication failed')
+          }
+          return
+        }
         toast.success('Logged in successfully')
         router.push('/dashboard')
       } else {
-        const { error } = await signUp(email, password)
-        if (error) throw error
-        toast.success('Signup successful! Please check your email for confirmation.')
+        const { data, error } = await signUp(email, password)
+        if (error) {
+          if (error.message.includes('Password should be')) {
+            toast.error('Password must be at least 6 characters')
+          } else {
+            toast.error(error.message || 'Authentication failed')
+          }
+          return
+        }
+        
+        if (data?.user) {
+          toast.success('Account created! Please check your email to confirm your account before logging in.')
+          setMode('login')
+          setEmail('')
+          setPassword('')
+          setFirstName('')
+          setLastName('')
+          return
+        }
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Authentication failed')
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message)
+      } else {
+        toast.error('An error occurred')
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md p-8 shadow-lg">
-        <h1 className="mb-6 text-2xl font-bold text-center">
-          {mode === 'login' ? 'Sign In' : 'Create Account'}
-        </h1>
-        
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
+          <h1 className="text-2xl font-bold text-center mb-6">
+            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+          </h1>
+          
+          {mode === 'signup' && (
+            <>
+              <div className="space-y-2">
+                <label htmlFor="firstName" className="block text-sm font-medium">
+                  First Name
+                </label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="lastName" className="block text-sm font-medium">
+                  Last Name
+                </label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+              </div>
+            </>
+          )}
+
           <div className="space-y-2">
             <label htmlFor="email" className="block text-sm font-medium">
               Email
@@ -53,13 +115,12 @@ export default function LoginPage() {
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <label htmlFor="password" className="block text-sm font-medium">
               Password
@@ -67,45 +128,54 @@ export default function LoginPage() {
             <Input
               id="password"
               type="password"
-              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading
-              ? 'Processing...'
-              : mode === 'login'
-              ? 'Sign In'
-              : 'Create Account'}
+
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              </div>
+            ) : mode === 'login' ? (
+              'Sign In'
+            ) : (
+              'Create Account'
+            )}
           </Button>
+
+          <div className="text-center text-sm">
+            {mode === 'login' ? (
+              <p>
+                Don&apos;t have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMode('signup')}
+                  className="text-primary hover:underline"
+                >
+                  Sign up
+                </button>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className="text-primary hover:underline"
+                >
+                  Log in
+                </button>
+              </p>
+            )}
+          </div>
         </form>
-        
-        <div className="mt-4 text-center text-sm">
-          {mode === 'login' ? (
-            <p>
-              Don't have an account?{' '}
-              <button
-                onClick={() => setMode('signup')}
-                className="text-blue-600 hover:underline"
-              >
-                Sign up
-              </button>
-            </p>
-          ) : (
-            <p>
-              Already have an account?{' '}
-              <button
-                onClick={() => setMode('login')}
-                className="text-blue-600 hover:underline"
-              >
-                Sign in
-              </button>
-            </p>
-          )}
-        </div>
       </Card>
     </div>
   )
