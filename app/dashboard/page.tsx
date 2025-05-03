@@ -2,6 +2,9 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { LogOut } from 'lucide-react'
 
 const features = [
   { name: 'Profile', href: '/profile', description: 'Manage your user profile and settings.' },
@@ -12,10 +15,27 @@ const features = [
 ]
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/login')
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-3xl font-bold mb-6">Welcome, {user?.email || 'User'}!</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Welcome, {user?.email || 'User'}!</h1>
+        <Button 
+          onClick={handleSignOut} 
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </Button>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {features.map((feature) => (
           <Link key={feature.name} href={feature.href}>
