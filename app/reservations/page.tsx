@@ -14,6 +14,9 @@ import type { Reservation } from '@/types'
 import { areConsecutive } from '@/lib/logic/reservations'
 import { TIME_SLOTS } from '@/constants/reservationsConstants'
 import { useAuth } from '@/contexts/AuthContext'
+import { debounce } from 'lodash'
+import type { PostgrestResponse } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Set the Bangkok timezone string
 const BANGKOK_TZ = 'Asia/Bangkok'
@@ -42,6 +45,29 @@ function utcToBangkokDisplay(utcDateString: string) {
   });
 }
 
+// Add these constants near the top of the file
+const MAX_RETRIES = 3
+const RETRY_DELAY = 1000 // 1 second
+const REFRESH_INTERVAL = 60000 // Increase to 60 seconds
+const DEBOUNCE_DELAY = 2000 // Increase to 2 seconds
+
+// Add type for Supabase query
+type ReservationQuery = ReturnType<SupabaseClient['from']>['select']
+
+// Update retry operation type
+async function retryOperation<T>(operation: () => ReservationQuery, retries = MAX_RETRIES): Promise<PostgrestResponse<T>> {
+  try {
+    const result = await operation()
+    return result
+  } catch (error) {
+    if (retries > 0 && error instanceof Error && error.message.includes('ERR_INSUFFICIENT_RESOURCES')) {
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
+      return retryOperation(operation, retries - 1)
+    }
+    throw error
+  }
+}
+
 export default function ReservationsPage() {
   const [selectedRoom, setSelectedRoom] = useState<number | null>(null)
   const [userReservations, setUserReservations] = useState<Reservation[]>([])
@@ -58,54 +84,95 @@ export default function ReservationsPage() {
   const [conflictDetected, setConflictDetected] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const { user } = useAuth()
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now())
 
   // Placeholder for today's date
   const today = new Date()
   const todayString = today.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
-  // Fetch reservations for the selected room and day
   const fetchReservations = useCallback(async () => {
     if (!selectedRoom) return
-    const now = getBangkokNow()
-    const startOfDay = new Date(now)
+    
+    const now = Date.now()
+    if (now - lastRefreshTime < REFRESH_INTERVAL) return
+    
+    const nowBangkok = getBangkokNow()
+    const startOfDay = new Date(nowBangkok)
     startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(now)
+    const endOfDay = new Date(nowBangkok)
     endOfDay.setHours(23, 59, 59, 999)
-    // Convert to UTC for query
     const startUTC = fromZonedTime(startOfDay, BANGKOK_TZ)
     const endUTC = fromZonedTime(endOfDay, BANGKOK_TZ)
-    const { data } = await supabase
-      .from('reservations')
-      .select('*')
-      .eq('room_id', selectedRoom)
-      .gte('start_time', startUTC.toISOString())
-      .lte('start_time', endUTC.toISOString())
-    // Convert times to Bangkok time for logic
-    setReservations(data || []) // Store raw UTC strings
-  }, [selectedRoom])
+    
+    let retries = 3
+    while (retries >= 0) {
+      try {
+        const { data, error } = await supabase
+          .from('reservations')
+          .select('*')
+          .eq('room_id', selectedRoom)
+          .gte('start_time', startUTC.toISOString())
+          .lte('start_time', endUTC.toISOString())
+
+        if (error) throw error
+        setReservations(data || [])
+        setLastRefreshTime(now)
+        break
+      } catch (error) {
+        if (retries > 0 && error instanceof Error && error.message.includes('ERR_INSUFFICIENT_RESOURCES')) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          retries--
+          continue
+        }
+        console.error('Error fetching reservations:', error)
+        toast.error('Failed to fetch reservations. Please try again.')
+        break
+      }
+    }
+  }, [selectedRoom, lastRefreshTime])
 
   useEffect(() => {
     fetchReservations()
   }, [fetchReservations, today])
 
-  // Fetch today's reservations for the current user
   async function fetchUserReservations() {
-    // Get email from Supabase Auth
-    const user_email = user?.email || '';
-    const now = getBangkokNow();
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
-    const startUTC = fromZonedTime(startOfDay, BANGKOK_TZ);
-    const endUTC = fromZonedTime(endOfDay, BANGKOK_TZ);
-    const { data } = await supabase
-      .from('reservations')
-      .select('*')
-      .eq('user_email', user_email)
-      .gte('start_time', startUTC.toISOString())
-      .lte('start_time', endUTC.toISOString());
-    setUserReservations(data || []); // Store raw UTC strings
+    const user_email = user?.email || ''
+    const now = Date.now()
+    if (now - lastRefreshTime < REFRESH_INTERVAL) return
+
+    const nowBangkok = getBangkokNow()
+    const startOfDay = new Date(nowBangkok)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(nowBangkok)
+    endOfDay.setHours(23, 59, 59, 999)
+    const startUTC = fromZonedTime(startOfDay, BANGKOK_TZ)
+    const endUTC = fromZonedTime(endOfDay, BANGKOK_TZ)
+
+    let retries = 3
+    while (retries >= 0) {
+      try {
+        const { data, error } = await supabase
+          .from('reservations')
+          .select('*')
+          .eq('user_email', user_email)
+          .gte('start_time', startUTC.toISOString())
+          .lte('start_time', endUTC.toISOString())
+
+        if (error) throw error
+        setUserReservations(data || [])
+        setLastRefreshTime(now)
+        break
+      } catch (error) {
+        if (retries > 0 && error instanceof Error && error.message.includes('ERR_INSUFFICIENT_RESOURCES')) {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          retries--
+          continue
+        }
+        console.error('Error fetching user reservations:', error)
+        toast.error('Failed to fetch your reservations. Please try again.')
+        break
+      }
+    }
   }
 
   useEffect(() => {
@@ -433,38 +500,44 @@ export default function ReservationsPage() {
     }
   }
 
-  // Refresh all reservations and update UI
-  async function refreshReservationsData() {
-    try {
-      setRefreshing(true)
-      await Promise.all([
-        fetchReservations(),
-        fetchUserReservations()
-      ])
+  // Create a heavily debounced version of refresh
+  const debouncedRefresh = useCallback(
+    debounce(async () => {
+      if (!selectedRoom) return
       
-      // Clear any selected slots that are now booked
-      setSelectedSlots(prev => prev.filter(slot => !getSlotStatus(slot)))
-    } catch (error) {
-      console.error('Error refreshing reservations:', error)
-    } finally {
-      setRefreshing(false)
-    }
-  }
+      try {
+        setRefreshing(true)
+        await Promise.all([
+          fetchReservations(),
+          fetchUserReservations()
+        ])
+        
+        setSelectedSlots(prev => prev.filter(slot => !getSlotStatus(slot)))
+      } catch (error) {
+        console.error('Error refreshing reservations:', error)
+        toast.error('Failed to refresh reservations')
+      } finally {
+        setRefreshing(false)
+      }
+    }, DEBOUNCE_DELAY, { maxWait: REFRESH_INTERVAL }),
+    [selectedRoom, fetchReservations, fetchUserReservations]
+  )
 
-  // Add a periodic refresh to keep booked slots up to date
+  // Modify the periodic refresh useEffect
   useEffect(() => {
     if (!selectedRoom) return
     
     // Initial fetch
-    refreshReservationsData()
+    debouncedRefresh()
     
-    // Set up interval (refresh every 30 seconds)
-    const intervalId = setInterval(() => {
-      refreshReservationsData()
-    }, 30000)
+    // Set up interval with longer delay
+    const intervalId = setInterval(debouncedRefresh, REFRESH_INTERVAL)
     
-    return () => clearInterval(intervalId)
-  }, [selectedRoom])
+    return () => {
+      clearInterval(intervalId)
+      debouncedRefresh.cancel()
+    }
+  }, [selectedRoom, debouncedRefresh])
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
