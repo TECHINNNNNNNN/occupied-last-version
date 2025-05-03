@@ -13,3 +13,6 @@ export const TIME_SLOTS = Array.from({ length: 26 }, (_, i) => {
   const min = i % 2 === 0 ? '00' : '30'
   return `${hour.toString().padStart(2, '0')}:${min}`
 })
+
+// Set the Bangkok timezone string
+export const BANGKOK_TZ = 'Asia/Bangkok'

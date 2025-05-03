@@ -9,82 +9,42 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { toZonedTime, fromZonedTime } from 'date-fns-tz'
 import { toast } from 'sonner'
-import { ROOMS } from '@/constants/reservationsConstants'
+import { BANGKOK_TZ, ROOMS, TIME_SLOTS } from '@/constants/reservationsConstants'
 import type { Reservation } from '@/types'
 import { areConsecutive } from '@/lib/logic/reservations'
-import { TIME_SLOTS } from '@/constants/reservationsConstants'
+import { getBangkokDateForSlot, utcToBangkokDisplay } from '@/lib/logic/reservations'
 import { useAuth } from '@/contexts/AuthContext'
-import { debounce } from 'lodash'
-import type { PostgrestResponse } from '@supabase/supabase-js'
-import type { SupabaseClient } from '@supabase/supabase-js'
 
-// Set the Bangkok timezone string
-const BANGKOK_TZ = 'Asia/Bangkok'
+// Constants
+const REFRESH_INTERVAL = 60000 // 60 seconds
 
 // Helper to get the current time in Bangkok
 function getBangkokNow() {
   return toZonedTime(new Date(), BANGKOK_TZ)
 }
 
-// Helper to get a Date in Bangkok for a given hour/minute
-function getBangkokDateForSlot(hour: number, min: number) {
-  const now = getBangkokNow()
-  const date = new Date(now)
-  date.setHours(hour, min, 0, 0)
-  return date
-}
-
-// Helper to convert UTC to Bangkok time for display (UTC+7)
-function utcToBangkokDisplay(utcDateString: string) {
-  const utcDate = new Date(utcDateString);
-  const bangkokDate = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000));
-  return bangkokDate.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-}
-
-// Add these constants near the top of the file
-const MAX_RETRIES = 3
-const RETRY_DELAY = 1000 // 1 second
-const REFRESH_INTERVAL = 60000 // Increase to 60 seconds
-const DEBOUNCE_DELAY = 2000 // Increase to 2 seconds
-
-// Add type for Supabase query
-type ReservationQuery = ReturnType<SupabaseClient['from']>['select']
-
-// Update retry operation type
-async function retryOperation<T>(operation: () => ReservationQuery, retries = MAX_RETRIES): Promise<PostgrestResponse<T>> {
-  try {
-    const result = await operation()
-    return result
-  } catch (error) {
-    if (retries > 0 && error instanceof Error && error.message.includes('ERR_INSUFFICIENT_RESOURCES')) {
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY))
-      return retryOperation(operation, retries - 1)
-    }
-    throw error
-  }
-}
-
 export default function ReservationsPage() {
+  // State for loading and errors
+  const [isManuallyRefreshing, setIsManuallyRefreshing] = useState(false)
+  const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false)
+  const [reservationError, setReservationError] = useState<string | null>(null)
+  const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now())
+  const [showAllRooms, setShowAllRooms] = useState(true)
+  const [cancelling, setCancelling] = useState(false)
+  
+  // State for form and UI
   const [selectedRoom, setSelectedRoom] = useState<number | null>(null)
   const [userReservations, setUserReservations] = useState<Reservation[]>([])
-  const [reservations, setReservations] = useState<Reservation[]>([])
-  const [booking, setBooking] = useState(false)
-  const [agenda, setAgenda] = useState('')
-  const [numPeople, setNumPeople] = useState('')
   const [selectedSlots, setSelectedSlots] = useState<string[]>([])
   const [slotMessage, setSlotMessage] = useState('')
   const [formError, setFormError] = useState('')
   const [formSuccess, setFormSuccess] = useState('')
-  const [optimisticReservations, setOptimisticReservations] = useState<Reservation[]>([])
-  const [cancelling, setCancelling] = useState(false)
+  const [agenda, setAgenda] = useState('')
+  const [numPeople, setNumPeople] = useState('')
+  const [booking, setBooking] = useState(false)
   const [conflictDetected, setConflictDetected] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
+  
   const { user } = useAuth()
-  const [lastRefreshTime, setLastRefreshTime] = useState<number>(Date.now())
 
   // Placeholder for today's date
   const today = new Date()
@@ -115,7 +75,7 @@ export default function ReservationsPage() {
           .lte('start_time', endUTC.toISOString())
 
         if (error) throw error
-        setReservations(data || [])
+        setUserReservations(data || [])
         setLastRefreshTime(now)
         break
       } catch (error) {
@@ -137,8 +97,9 @@ export default function ReservationsPage() {
 
   async function fetchUserReservations() {
     const user_email = user?.email || ''
-    const now = Date.now()
-    if (now - lastRefreshTime < REFRESH_INTERVAL) return
+    if (!user_email) return
+
+    setReservationError(null)
 
     const nowBangkok = getBangkokNow()
     const startOfDay = new Date(nowBangkok)
@@ -151,24 +112,41 @@ export default function ReservationsPage() {
     let retries = 3
     while (retries >= 0) {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('reservations')
           .select('*')
           .eq('user_email', user_email)
           .gte('start_time', startUTC.toISOString())
           .lte('start_time', endUTC.toISOString())
+          .order('start_time', { ascending: true }) // Order by start time
+
+        // Add room filter if a room is selected and showAllRooms is false
+        if (selectedRoom && !showAllRooms) {
+          query = query.eq('room_id', selectedRoom)
+        }
+
+        const { data, error } = await query
 
         if (error) throw error
+        
+        // Log the fetched data for debugging
+        console.log('Fetched reservations:', data)
+        
         setUserReservations(data || [])
-        setLastRefreshTime(now)
+        setLastRefreshTime(Date.now())
+        setReservationError(null)
         break
       } catch (error) {
-        if (retries > 0 && error instanceof Error && error.message.includes('ERR_INSUFFICIENT_RESOURCES')) {
+        console.error('Error fetching reservations:', error)
+        retries--
+        
+        if (retries >= 0) {
           await new Promise(resolve => setTimeout(resolve, 1000))
-          retries--
           continue
         }
-        console.error('Error fetching user reservations:', error)
+        
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reservations'
+        setReservationError(errorMessage)
         toast.error('Failed to fetch your reservations. Please try again.')
         break
       }
@@ -176,8 +154,10 @@ export default function ReservationsPage() {
   }
 
   useEffect(() => {
-    fetchUserReservations();
-  }, [selectedRoom, today, user]); // Added user dependency
+    if (user?.email) {
+      fetchUserReservations()
+    }
+  }, [user])
 
   // Update user reservations in real time
   useEffect(() => {
@@ -211,10 +191,9 @@ export default function ReservationsPage() {
     // Convert the Bangkok slot start time to a UTC Date object for comparison
     const slotStartUTC = fromZonedTime(slotStartBangkok, BANGKOK_TZ)
 
-    // Combine actual reservations (UTC strings) and optimistic reservations (UTC strings)
+    // Only use userReservations, since optimisticReservations is not defined
     const combinedReservations = [
-      ...reservations,
-      ...optimisticReservations
+      ...userReservations
     ];
 
     return combinedReservations.find(r => {
@@ -281,186 +260,129 @@ export default function ReservationsPage() {
     return `${start} - ${end}`
   }
 
-  async function handleBook(e: React.FormEvent) {
-    e.preventDefault()
-    setFormError('')
-    setFormSuccess('')
-    if (!agenda.trim()) {
-      setFormError('Agenda is required.')
-      return
-    }
-    if (!numPeople || isNaN(Number(numPeople)) || Number(numPeople) < 1) {
-      setFormError('Please enter a valid number of people.')
-      return
-    }
-    if (selectedSlots.length === 0) {
-      setFormError('Please select at least one time slot.')
-      return
-    }
-    // Ensure slots are consecutive
-    if (!areConsecutive(selectedSlots)) {
-      setFormError('Please select only consecutive slots.')
-      return
-    }
-
-    const indices = selectedSlots.map(s => TIME_SLOTS.indexOf(s)).sort((a, b) => a - b)
-    const startSlot = TIME_SLOTS[indices[0]]
-    const endIdx = indices[indices.length - 1] + 1
-    const endSlot = endIdx < TIME_SLOTS.length ? TIME_SLOTS[endIdx] : '21:00'
-    const [startHour, startMin] = startSlot.split(':').map(Number)
-    const [endHour, endMin] = endSlot.split(':').map(Number)
-    const start = getBangkokDateForSlot(startHour, startMin)
-    const end = getBangkokDateForSlot(endHour, endMin)
-    const startUTC = fromZonedTime(start, BANGKOK_TZ)
-    const endUTC = fromZonedTime(end, BANGKOK_TZ)
-
-    // Check for overlap again before booking
-    const overlap = [...reservations, ...optimisticReservations].some(r => {
-      const resStart = new Date(r.start_time)
-      const resEnd = new Date(r.end_time)
-      return (startUTC < resEnd && endUTC > resStart)
-    })
-    if (overlap) {
-      setFormError('Selected period overlaps with an existing booking.')
-      return
-    }
-
-    setBooking(true)
-    // Get email from Supabase Auth
-    const user_email = user?.email || 'unknown'
-
-    // Create optimistic reservation
-    const optimisticReservation: Reservation = {
-      id: 'temp-' + Date.now(),
-      room_id: selectedRoom!,
-      user_email,
-      start_time: startUTC.toISOString(),
-      end_time: endUTC.toISOString(),
-      created_at: new Date().toISOString(),
-      agenda,
-    }
-
-    // Add to optimistic reservations
-    setOptimisticReservations(prev => [...prev, optimisticReservation])
-
+  // Background refresh function - doesn't show loading UI
+  const backgroundRefresh = useCallback(async () => {
+    if (isBackgroundRefreshing || !user?.email) return
+    
+    setIsBackgroundRefreshing(true)
     try {
-      const { error } = await supabase.from('reservations').insert({
-        room_id: selectedRoom,
-        user_email,
-        start_time: startUTC.toISOString(),
-        end_time: endUTC.toISOString(),
-        created_at: new Date().toISOString(),
-        agenda,
-        num_people: Number(numPeople),
-      }).select()
+      const nowBangkok = getBangkokNow()
+      const startOfDay = new Date(nowBangkok)
+      startOfDay.setHours(0, 0, 0, 0)
+      const endOfDay = new Date(nowBangkok)
+      endOfDay.setHours(23, 59, 59, 999)
+      const startUTC = fromZonedTime(startOfDay, BANGKOK_TZ)
+      const endUTC = fromZonedTime(endOfDay, BANGKOK_TZ)
 
-      // Check for error from Supabase
-      if (error) {
-        console.error('Supabase error:', error);
-        throw new Error(error.message || 'Failed to make reservation');
+      let query = supabase
+        .from('reservations')
+        .select('*')
+        .eq('user_email', user.email)
+        .gte('start_time', startUTC.toISOString())
+        .lte('start_time', endUTC.toISOString())
+        .order('start_time', { ascending: true })
+
+      if (selectedRoom && !showAllRooms) {
+        query = query.eq('room_id', selectedRoom)
       }
 
-      setFormSuccess('Reservation successful!')
-      toast('Reservation has been created.')
-      setAgenda('')
-      setNumPeople('')
-      setSelectedSlots([])
-      // Remove optimistic reservation after successful booking
-      setOptimisticReservations(prev => prev.filter(r => r.id !== optimisticReservation.id))
+      const { data, error } = await query
+
+      if (error) throw error
+      
+      // Only update if data has changed
+      const hasDataChanged = JSON.stringify(data) !== JSON.stringify(userReservations)
+      if (hasDataChanged) {
+        setUserReservations(data || [])
+        setLastRefreshTime(Date.now())
+      }
     } catch (error) {
-      console.error('Reservation error:', error);
-      
-      // Provide a user-friendly error message
-      const errorMessage = error instanceof Error 
-        ? error.message.includes('already been booked') 
-          ? error.message 
-          : 'Failed to make reservation. This time slot may already be booked.'
-        : 'Failed to make reservation. Please try again.';
-      
-      setFormError(errorMessage);
-      toast.error(errorMessage);
-      
-      // Remove optimistic reservation on error
-      setOptimisticReservations(prev => prev.filter(r => r.id !== optimisticReservation.id))
-      
-      // Set conflict detected to true for visual indication
-      setConflictDetected(true)
-      
-      // Refresh reservations data to get the latest state
-      await refreshReservationsData();
-      
-      // Reset conflict indication after a delay
-      setTimeout(() => setConflictDetected(false), 3000);
+      console.error('Background refresh error:', error)
+      // Don't show error UI for background refreshes
     } finally {
-      setBooking(false)
+      setIsBackgroundRefreshing(false)
+    }
+  }, [user, selectedRoom, showAllRooms, userReservations])
+
+  // Manual refresh function - shows loading UI
+  const manualRefresh = async () => {
+    if (isManuallyRefreshing || !user?.email) return
+    
+    setIsManuallyRefreshing(true)
+    setReservationError(null)
+    
+    try {
+      const nowBangkok = getBangkokNow()
+      const startOfDay = new Date(nowBangkok)
+      startOfDay.setHours(0, 0, 0, 0)
+      const endOfDay = new Date(nowBangkok)
+      endOfDay.setHours(23, 59, 59, 999)
+      const startUTC = fromZonedTime(startOfDay, BANGKOK_TZ)
+      const endUTC = fromZonedTime(endOfDay, BANGKOK_TZ)
+
+      let query = supabase
+        .from('reservations')
+        .select('*')
+        .eq('user_email', user.email)
+        .gte('start_time', startUTC.toISOString())
+        .lte('start_time', endUTC.toISOString())
+        .order('start_time', { ascending: true })
+
+      if (selectedRoom && !showAllRooms) {
+        query = query.eq('room_id', selectedRoom)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      
+      setUserReservations(data || [])
+      setLastRefreshTime(Date.now())
+      toast.success('Reservations refreshed')
+    } catch (error) {
+      console.error('Manual refresh error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch reservations'
+      setReservationError(errorMessage)
+      toast.error('Failed to refresh reservations')
+    } finally {
+      setIsManuallyRefreshing(false)
     }
   }
 
-  // Supabase Realtime subscription for reservations
-  const subscriptionRef = useRef<RealtimeChannel | null>(null)
+  // Set up background refresh interval
   useEffect(() => {
-    if (!selectedRoom) return
+    if (!user?.email) return
 
-    if (subscriptionRef.current) {
-      subscriptionRef.current.unsubscribe()
-    }
+    // Initial background refresh
+    backgroundRefresh()
+
+    // Set up interval for background refresh
+    const intervalId = setInterval(backgroundRefresh, REFRESH_INTERVAL)
+    
+    return () => clearInterval(intervalId)
+  }, [user, backgroundRefresh])
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    if (!user?.email) return
 
     const channel = supabase
-      .channel('room-reservations')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'reservations', 
-        filter: `room_id=eq.${selectedRoom}` 
-      }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          const newReservation = payload.new as Reservation
-          setReservations(prev => [...prev, newReservation])
-          
-          // Check if any of our selected slots conflict with this new reservation
-          const newStart = new Date(newReservation.start_time)
-          const newEnd = new Date(newReservation.end_time)
-          
-          // If we have selected slots that overlap with the new reservation, clear them
-          const hasConflict = selectedSlots.some(slot => {
-            const [hour, min] = slot.split(':').map(Number)
-            const slotStartBangkok = getBangkokDateForSlot(hour, min)
-            const slotStartUTC = fromZonedTime(slotStartBangkok, BANGKOK_TZ)
-            return slotStartUTC >= newStart && slotStartUTC < newEnd
-          })
-          
-          if (hasConflict) {
-            // Clear conflicting slots and notify user
-            setSelectedSlots(prev => prev.filter(slot => {
-              const [hour, min] = slot.split(':').map(Number)
-              const slotStartBangkok = getBangkokDateForSlot(hour, min)
-              const slotStartUTC = fromZonedTime(slotStartBangkok, BANGKOK_TZ)
-              return !(slotStartUTC >= newStart && slotStartUTC < newEnd)
-            }))
-            
-            toast.warning("Some of your selected time slots were just booked by another user", {
-              duration: 5000,
-            })
-            
-            setConflictDetected(true)
-            setTimeout(() => setConflictDetected(false), 5000)
-          }
-        } else if (payload.eventType === 'DELETE') {
-          const deletedId = payload.old.id
-          setReservations(prev => prev.filter(r => r.id !== deletedId))
-          // Refresh to show newly available slots 
-          fetchReservations()
-        }
+      .channel('reservation-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'reservations',
+        filter: `user_email=eq.${user.email}`
+      }, () => {
+        // Trigger background refresh when changes occur
+        backgroundRefresh()
       })
       .subscribe()
 
-    subscriptionRef.current = channel
     return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe()
-      }
+      channel.unsubscribe()
     }
-  }, [selectedRoom, today, selectedSlots])
+  }, [user, backgroundRefresh])
 
   // Helper to check if a reservation is in the past
   function isReservationInPast(reservation: Reservation) {
@@ -500,44 +422,144 @@ export default function ReservationsPage() {
     }
   }
 
-  // Create a heavily debounced version of refresh
-  const debouncedRefresh = useCallback(
-    debounce(async () => {
-      if (!selectedRoom) return
-      
-      try {
-        setRefreshing(true)
-        await Promise.all([
-          fetchReservations(),
-          fetchUserReservations()
-        ])
-        
-        setSelectedSlots(prev => prev.filter(slot => !getSlotStatus(slot)))
-      } catch (error) {
-        console.error('Error refreshing reservations:', error)
-        toast.error('Failed to refresh reservations')
-      } finally {
-        setRefreshing(false)
-      }
-    }, DEBOUNCE_DELAY, { maxWait: REFRESH_INTERVAL }),
-    [selectedRoom, fetchReservations, fetchUserReservations]
-  )
-
-  // Modify the periodic refresh useEffect
+  // Supabase Realtime subscription for reservations
+  const subscriptionRef = useRef<RealtimeChannel | null>(null)
   useEffect(() => {
     if (!selectedRoom) return
-    
-    // Initial fetch
-    debouncedRefresh()
-    
-    // Set up interval with longer delay
-    const intervalId = setInterval(debouncedRefresh, REFRESH_INTERVAL)
-    
-    return () => {
-      clearInterval(intervalId)
-      debouncedRefresh.cancel()
+
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe()
     }
-  }, [selectedRoom, debouncedRefresh])
+
+    const channel = supabase
+      .channel('room-reservations')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'reservations', 
+        filter: `room_id=eq.${selectedRoom}` 
+      }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          const newReservation = payload.new as Reservation
+          setUserReservations(prev => [...prev, newReservation])
+          
+          // Check if any of our selected slots conflict with this new reservation
+          const newStart = new Date(newReservation.start_time)
+          const newEnd = new Date(newReservation.end_time)
+          
+          // If we have selected slots that overlap with the new reservation, clear them
+          const hasConflict = selectedSlots.some(slot => {
+            const [hour, min] = slot.split(':').map(Number)
+            const slotStartBangkok = getBangkokDateForSlot(hour, min)
+            const slotStartUTC = fromZonedTime(slotStartBangkok, BANGKOK_TZ)
+            return slotStartUTC >= newStart && slotStartUTC < newEnd
+          })
+          
+          if (hasConflict) {
+            // Clear conflicting slots and notify user
+            setSelectedSlots(prev => prev.filter(slot => {
+              const [hour, min] = slot.split(':').map(Number)
+              const slotStartBangkok = getBangkokDateForSlot(hour, min)
+              const slotStartUTC = fromZonedTime(slotStartBangkok, BANGKOK_TZ)
+              return !(slotStartUTC >= newStart && slotStartUTC < newEnd)
+            }))
+            
+            toast.warning("Some of your selected time slots were just booked by another user", {
+              duration: 5000,
+            })
+            
+            setConflictDetected(true)
+            setTimeout(() => setConflictDetected(false), 5000)
+          }
+        } else if (payload.eventType === 'DELETE') {
+          const deletedId = payload.old.id
+          setUserReservations(prev => prev.filter(r => r.id !== deletedId))
+          // Refresh to show newly available slots 
+          fetchReservations()
+        }
+      })
+      .subscribe()
+
+    subscriptionRef.current = channel
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
+      }
+    }
+  }, [selectedRoom, today, selectedSlots])
+
+  // Handle booking
+  async function handleBook(e: React.FormEvent) {
+    e.preventDefault()
+    setFormError('')
+    setFormSuccess('')
+
+    // Validation
+    if (!agenda.trim()) {
+      setFormError('Agenda is required.')
+      return
+    }
+    if (!numPeople || isNaN(Number(numPeople)) || Number(numPeople) < 1) {
+      setFormError('Please enter a valid number of people.')
+      return
+    }
+    if (selectedSlots.length === 0) {
+      setFormError('Please select at least one time slot.')
+      return
+    }
+    if (!areConsecutive(selectedSlots)) {
+      setFormError('Please select only consecutive slots.')
+      return
+    }
+
+    const indices = selectedSlots.map(s => TIME_SLOTS.indexOf(s)).sort((a, b) => a - b)
+    const startSlot = TIME_SLOTS[indices[0]]
+    const endIdx = indices[indices.length - 1] + 1
+    const endSlot = endIdx < TIME_SLOTS.length ? TIME_SLOTS[endIdx] : '21:00'
+    const [startHour, startMin] = startSlot.split(':').map(Number)
+    const [endHour, endMin] = endSlot.split(':').map(Number)
+    const start = getBangkokDateForSlot(startHour, startMin)
+    const end = getBangkokDateForSlot(endHour, endMin)
+    const startUTC = fromZonedTime(start, BANGKOK_TZ)
+    const endUTC = fromZonedTime(end, BANGKOK_TZ)
+
+    setBooking(true)
+    try {
+      const { error } = await supabase.from('reservations').insert({
+        room_id: selectedRoom,
+        user_email: user?.email,
+        start_time: startUTC.toISOString(),
+        end_time: endUTC.toISOString(),
+        agenda,
+        num_people: Number(numPeople),
+      })
+
+      if (error) throw error
+
+      setFormSuccess('Reservation successful!')
+      toast.success('Reservation has been created.')
+      setAgenda('')
+      setNumPeople('')
+      setSelectedSlots([])
+      
+      // Background refresh to get the actual data
+      backgroundRefresh()
+    } catch (error) {
+      console.error('Reservation error:', error)
+      const errorMessage = error instanceof Error 
+        ? error.message.includes('already been booked') 
+          ? error.message 
+          : 'Failed to make reservation. This time slot may already be booked.'
+        : 'Failed to make reservation. Please try again.'
+      
+      setFormError(errorMessage)
+      toast.error(errorMessage)
+      setConflictDetected(true)
+      setTimeout(() => setConflictDetected(false), 3000)
+    } finally {
+      setBooking(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -608,7 +630,7 @@ export default function ReservationsPage() {
                 <div>
                   <div className="flex justify-between items-center">
                     <label className="block font-semibold mb-1">Select Time Slots <span className="text-red-500">*</span></label>
-                    {refreshing && <span className="text-xs text-gray-500">Updating slots...</span>}
+                    {booking && <span className="text-xs text-gray-500">Making reservation...</span>}
                   </div>
                   {conflictDetected && (
                     <div className="text-red-600 font-medium border border-red-300 bg-red-50 p-2 rounded mb-2 animate-pulse">
@@ -621,7 +643,7 @@ export default function ReservationsPage() {
                         <Checkbox
                           checked={selectedSlots.includes(slot)}
                           onCheckedChange={() => !isSlotDisabled(slot) && handleSlotChange(slot)}
-                          disabled={isSlotDisabled(slot)}
+                          disabled={isSlotDisabled(slot) || booking}
                         />
                         <span>{slot}</span>
                       </label>
@@ -647,7 +669,44 @@ export default function ReservationsPage() {
 
       {/* User Reservations Table */}
       <div className="mt-10">
-        <h2 className="text-xl font-semibold mb-4">My Reservations (Today)</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">My Reservations (Today)</h2>
+          <div className="flex items-center gap-4">
+            <label className="text-sm text-gray-600 flex items-center gap-2">
+              <Checkbox
+                checked={showAllRooms}
+                onCheckedChange={(checked) => setShowAllRooms(checked === true)}
+              />
+              Show all rooms
+            </label>
+            {!showAllRooms && selectedRoom && (
+              <span className="text-sm text-gray-600">
+                Showing reservations for: {ROOMS.find(r => r.id === selectedRoom)?.name}
+              </span>
+            )}
+            {isManuallyRefreshing && (
+              <span className="text-sm text-blue-600 animate-pulse">
+                Refreshing...
+              </span>
+            )}
+          </div>
+        </div>
+
+        {reservationError && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
+            {reservationError}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2"
+              onClick={manualRefresh}
+              disabled={isManuallyRefreshing}
+            >
+              Try Again
+            </Button>
+          </div>
+        )}
+
         <Table>
           <thead>
             <tr>
@@ -660,13 +719,31 @@ export default function ReservationsPage() {
             </tr>
           </thead>
           <tbody>
-            {userReservations.length === 0 ? (
+            {isManuallyRefreshing && userReservations.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center text-gray-500">No reservations yet.</td>
+                <td colSpan={6} className="text-center py-8">
+                  <div className="flex items-center justify-center text-gray-500">
+                    <span className="animate-spin mr-2">⏳</span>
+                    Loading...
+                  </div>
+                </td>
+              </tr>
+            ) : userReservations.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center text-gray-500 py-8">
+                  {!showAllRooms && !selectedRoom 
+                    ? 'Select a room to view its reservations'
+                    : 'No reservations found for today.'}
+                </td>
               </tr>
             ) : (
               userReservations.map(res => (
-                <tr key={res.id}>
+                <tr 
+                  key={res.id} 
+                  className={`hover:bg-gray-50 ${
+                    res.id.toString().startsWith('temp-') ? 'animate-pulse bg-blue-50' : ''
+                  }`}
+                >
                   <td>{ROOMS.find(r => r.id === res.room_id)?.name || res.room_id}</td>
                   <td>{utcToBangkokDisplay(res.start_time)}</td>
                   <td>{utcToBangkokDisplay(res.end_time)}</td>
@@ -676,7 +753,7 @@ export default function ReservationsPage() {
                     <Button 
                       variant="destructive" 
                       size="sm"
-                      disabled={cancelling || isReservationInPast(res)}
+                      disabled={cancelling || isReservationInPast(res) || res.id.toString().startsWith('temp-')}
                       onClick={() => handleCancel(res)}
                     >
                       {cancelling ? 'Cancelling...' : 'Cancel'}
@@ -687,6 +764,17 @@ export default function ReservationsPage() {
             )}
           </tbody>
         </Table>
+
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={manualRefresh}
+            disabled={isManuallyRefreshing}
+          >
+            {isManuallyRefreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        </div>
       </div>
     </div>
   )
