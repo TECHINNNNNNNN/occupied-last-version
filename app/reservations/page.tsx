@@ -13,6 +13,7 @@ import { ROOMS } from '@/constants/reservationsConstants'
 import type { Reservation } from '@/types'
 import { areConsecutive } from '@/lib/logic/reservations'
 import { TIME_SLOTS } from '@/constants/reservationsConstants'
+import { useAuth } from '@/contexts/AuthContext'
 
 // Set the Bangkok timezone string
 const BANGKOK_TZ = 'Asia/Bangkok'
@@ -56,6 +57,7 @@ export default function ReservationsPage() {
   const [cancelling, setCancelling] = useState(false)
   const [conflictDetected, setConflictDetected] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const { user } = useAuth()
 
   // Placeholder for today's date
   const today = new Date()
@@ -88,8 +90,8 @@ export default function ReservationsPage() {
 
   // Fetch today's reservations for the current user
   async function fetchUserReservations() {
-    const { data: userData } = await supabase.auth.getUser();
-    const user_email = userData?.user?.email || '';
+    // Get email from Supabase Auth
+    const user_email = user?.email || '';
     const now = getBangkokNow();
     const startOfDay = new Date(now);
     startOfDay.setHours(0, 0, 0, 0);
@@ -108,13 +110,13 @@ export default function ReservationsPage() {
 
   useEffect(() => {
     fetchUserReservations();
-  }, [selectedRoom, today]);
+  }, [selectedRoom, today, user]); // Added user dependency
 
   // Update user reservations in real time
   useEffect(() => {
     const subscribeUserReservations = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const user_email = userData?.user?.email || '';
+      // Get email from Supabase Auth
+      const user_email = user?.email || '';
       const channel = supabase
         .channel('user-reservations')
         .on('postgres_changes', {
@@ -133,7 +135,7 @@ export default function ReservationsPage() {
     return () => {
       if (channelRef) channelRef.unsubscribe();
     };
-  }, []);
+  }, [user]); // Added user dependency
 
   // Helper to check if a slot is booked
   function getSlotStatus(slot: string) {
@@ -257,8 +259,8 @@ export default function ReservationsPage() {
     }
 
     setBooking(true)
-    const { data: userData } = await supabase.auth.getUser()
-    const user_email = userData?.user?.email || 'unknown'
+    // Get email from Supabase Auth
+    const user_email = user?.email || 'unknown'
 
     // Create optimistic reservation
     const optimisticReservation: Reservation = {
