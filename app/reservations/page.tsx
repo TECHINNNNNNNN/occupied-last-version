@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Table } from '@/components/ui/table'
@@ -64,7 +64,7 @@ export default function ReservationsPage() {
   const todayString = today.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   // Fetch reservations for the selected room and day
-  async function fetchReservations() {
+  const fetchReservations = useCallback(async () => {
     if (!selectedRoom) return
     const now = getBangkokNow()
     const startOfDay = new Date(now)
@@ -82,11 +82,11 @@ export default function ReservationsPage() {
       .lte('start_time', endUTC.toISOString())
     // Convert times to Bangkok time for logic
     setReservations(data || []) // Store raw UTC strings
-  }
+  }, [selectedRoom])
 
   useEffect(() => {
     fetchReservations()
-  }, [selectedRoom, today])
+  }, [fetchReservations, today])
 
   // Fetch today's reservations for the current user
   async function fetchUserReservations() {
