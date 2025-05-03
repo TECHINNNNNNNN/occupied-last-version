@@ -25,7 +25,7 @@ export default function LoginPage() {
         const { error } = await signIn(email, password)
         if (error) throw error
         toast.success('Logged in successfully')
-        router.push('/reservations')
+        router.push('/dashboard')
       } else {
         const { error } = await signUp(email, password)
         if (error) throw error
