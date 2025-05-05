@@ -100,3 +100,70 @@ This system helps students and faculty monitor, book, and manage library spaces 
   2. Explain why they’re necessary
   3. Provide the exact install command(s)
   4. Wait for my confirmation before proceeding
+  5. I will download for you
+
+# Enhanced Commenting Standards
+
+- Aim for comment-to-code ratio of 30-40% for educational and complex codebases
+- Every function, class, or significant code block MUST have a detailed header comment that explains:
+
+  1. PURPOSE: What it does and why it exists in business/functional terms
+  2. CONTEXT: How it fits into the larger system architecture
+  3. INPUTS/OUTPUTS: Detailed explanation of parameters and return values
+  4. ASSUMPTIONS: Any preconditions that must be true for the code to work
+  5. EDGE CASES: How special situations are handled
+
+- Include IMPLEMENTATION COMMENTS throughout the code that explain:
+
+  - WHY specific approaches were chosen (not just what the code does)
+  - The REASONING behind design decisions
+  - WARNINGS about potential pitfalls or non-obvious behaviors
+  - PERFORMANCE considerations for resource-intensive operations
+
+- For SQL queries, comment on:
+
+  - The business purpose of each query
+  - The meaning of complex joins or conditions
+  - Performance considerations (indexes used, potential bottlenecks)
+  - Data integrity protections implemented
+
+- For algorithms and complex logic:
+
+  - Break down the steps with detailed explanation of each part
+  - Include small examples where appropriate to illustrate behavior
+  - Link to relevant theory or documentation when using established patterns
+
+- Never leave "magic numbers" or constants without explanatory comments
+- Document any workarounds or temporary solutions with TODOs and explanations
+- For domain-specific code, include business context that explains WHY a rule exists
+- Comment on security considerations explicitly when
+
+# Comment Maintenance
+
+- ALWAYS update comments when modifying the corresponding code
+- When refactoring or redesigning code, review and update ALL affected comments
+- Flag any comments that might need verification with TODO markers if unsure
+- Never leave "zombie comments" that refer to code that no longer exists
+- When changing function signatures or behaviors, immediately update their documentation
+- If asked to modify code, AUTOMATICALLY update any comments that become outdated
+- Check for comment/code inconsistencies when debugging issues
+- When adding new functionality to existing code, update high-level documentation to reflect the changes
+- Ensure comments correctly reflect the current state of the code, not just its original design
+- When making structural changes, update architectural comments to reflect the new design
+
+# Educational Explanations
+
+- When explaining technical concepts, provide BOTH technical definitions AND beginner-friendly explanations
+- Break down complex technical terms using simple analogies or real-world examples
+- When introducing acronyms like "RPC," always explain what they stand for AND what they mean conceptually
+- Structure explanations in layers: simple overview first, followed by technical details
+- Compare new concepts to ones I likely already understand as a sophomore CS student
+- When explaining code patterns or algorithms, include:
+  1. The formal/technical name (e.g., "Factory Pattern," "Recursion")
+  2. A simple 1-2 sentence explanation of what it does
+  3. Why it's useful in this specific context
+  4. A tiny example if helpful
+- Use visual language when possible ("think of it like..." or "imagine...")
+- For database concepts, networking, or other infrastructure topics, provide extra context since these are often less covered in early CS courses
+- When explaining library-specific functions, briefly explain the underlying CS concept they're built on
+- Link concepts back to fundamental CS principles I would have learned in first/second year
