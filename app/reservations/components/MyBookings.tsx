@@ -9,6 +9,8 @@ import { format, parseISO, isAfter } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Reservation } from '../types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
 
 /**
  * MyBookings Component
@@ -26,6 +28,8 @@ import type { Reservation } from '../types';
  *   - Visual distinction between active and past reservations
  *   - Ability to cancel upcoming reservations
  *   - Clear empty state when no bookings exist
+ *   - Compact, space-efficient design with animations
+ *   - Expandable/collapsible interface
  * 
  * BUSINESS RULES:
  *   - Only shows confirmed reservations (not pending or cancelled)
@@ -47,6 +51,8 @@ const MyBookings = () => {
   const [reservations, setReservations] = useState<ReservationWithRoom[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // State for expanding/collapsing the reservations section
+  const [isExpanded, setIsExpanded] = useState(true);
 
   /**
    * Fetches the user's active reservations from the database
@@ -264,14 +270,14 @@ const MyBookings = () => {
   // Loading state with skeleton UI
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>My Bookings</CardTitle>
+      <Card className="shadow-sm border border-gray-200">
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-base">My Bookings</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
+        <CardContent className="px-4 pb-3">
+          <div className="space-y-2">
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
           </div>
         </CardContent>
       </Card>
@@ -281,12 +287,12 @@ const MyBookings = () => {
   // Error state
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>My Bookings</CardTitle>
+      <Card className="shadow-sm border border-gray-200">
+        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
+          <CardTitle className="text-base">My Bookings</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-red-500 text-center py-4">
+        <CardContent className="px-4 pb-3">
+          <div className="text-red-500 text-center py-2 text-sm">
             {error}
           </div>
         </CardContent>
@@ -297,12 +303,12 @@ const MyBookings = () => {
   // Not authenticated state
   if (!user) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>My Bookings</CardTitle>
+      <Card className="shadow-sm border border-gray-200">
+        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
+          <CardTitle className="text-base">My Bookings</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-center text-gray-500 py-4">
+        <CardContent className="px-4 pb-3">
+          <div className="text-center text-gray-500 py-2 text-sm">
             Please sign in to view your bookings
           </div>
         </CardContent>
@@ -310,64 +316,90 @@ const MyBookings = () => {
     );
   }
 
-  // Main component render with reservation list
+  // Main component render with reservation list and animations
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>My Bookings</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* Empty state when user has no reservations */}
-        {reservations.length === 0 ? (
-          <div className="text-center text-gray-500 py-6">
-            You don&apos;t have any active bookings
-          </div>
-        ) : (
-          // List of reservations
-          <div className="space-y-4">
-            {reservations.map((reservation) => {
-              // Parse ISO strings to Date objects for manipulation
-              const startTime = parseISO(reservation.start_time);
-              const endTime = parseISO(reservation.end_time);
-              // Determine if reservation is in the future (still active)
-              const isActive = isAfter(endTime, new Date());
-              
-              return (
-                <div 
-                  key={reservation.id} 
-                  className={`p-4 rounded-lg border ${
-                    // Visual distinction between active and past reservations
-                    isActive ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      {/* Room name heading */}
-                      <h3 className="font-semibold">{reservation.room_name}</h3>
-                      {/* Time range formatting */}
-                      <div className="text-sm text-gray-600">
-                        {format(startTime, 'MMM d, h:mm a')} - {format(endTime, 'h:mm a')}
-                      </div>
-                      {/* Reservation purpose */}
-                      <div className="text-sm mt-1">{reservation.agenda}</div>
-                    </div>
-                    {/* Cancel button only shown for active reservations */}
-                    {isActive && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleCancelReservation(reservation.id)}
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+    <Card className="shadow-sm border border-gray-200">
+      <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
+        <CardTitle className="text-base">My Bookings</CardTitle>
+        {reservations.length > 0 && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0" 
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? 
+              <ChevronUp className="h-4 w-4" /> : 
+              <ChevronDown className="h-4 w-4" />
+            }
+          </Button>
         )}
-      </CardContent>
+      </CardHeader>
+      <motion.div
+        animate={{ height: isExpanded ? 'auto' : reservations.length > 0 ? '0px' : 'auto' }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="overflow-hidden"
+      >
+        <CardContent className="px-4 pb-3">
+          {/* Empty state when user has no reservations - made more compact */}
+          {reservations.length === 0 ? (
+            <div className="text-center text-gray-500 py-2 text-sm">
+              You don&apos;t have any active bookings
+            </div>
+          ) : (
+            // List of reservations with animation
+            <AnimatePresence initial={false}>
+              <div className="space-y-2">
+                {reservations.map((reservation) => {
+                  // Parse ISO strings to Date objects for manipulation
+                  const startTime = parseISO(reservation.start_time);
+                  const endTime = parseISO(reservation.end_time);
+                  // Determine if reservation is in the future (still active)
+                  const isActive = isAfter(endTime, new Date());
+                  
+                  return (
+                    <motion.div
+                      key={reservation.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className={`rounded-md border p-3 ${
+                        // Visual distinction between active and past reservations
+                        isActive ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'
+                      } hover:shadow-sm transition-shadow`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex-1 min-w-0">
+                          {/* Room name heading */}
+                          <h3 className="font-semibold text-sm truncate">{reservation.room_name}</h3>
+                          {/* Time range formatting */}
+                          <div className="text-xs text-gray-600 mt-1">
+                            {format(startTime, 'MMM d, h:mm a')} - {format(endTime, 'h:mm a')}
+                          </div>
+                          {/* Reservation purpose */}
+                          <div className="text-xs text-gray-700 mt-1 truncate">{reservation.agenda}</div>
+                        </div>
+                        {/* Cancel button only shown for active reservations */}
+                        {isActive && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-7 w-7 p-0 text-gray-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => handleCancelReservation(reservation.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </AnimatePresence>
+          )}
+        </CardContent>
+      </motion.div>
     </Card>
   );
 };

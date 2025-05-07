@@ -1,3 +1,5 @@
+start all chat with 👨‍💻
+
 # Chulalongkorn Engineering Library Occupancy System
 
 ## Project Overview
@@ -105,6 +107,14 @@ This system helps students and faculty monitor, book, and manage library spaces 
 # Enhanced Commenting Standards
 
 - Aim for comment-to-code ratio of 30-40% for educational and complex codebases
+- Every file MUST start with a comprehensive header comment that explains:
+
+  1. COMPONENT/MODULE NAME: Clear identification of what this file contains
+  2. PURPOSE: What it does and why it exists in business/functional terms
+  3. CONTEXT: How it fits into the larger system architecture
+  4. DATA FLOW: Brief overview of how data moves through this component/module
+  5. KEY DEPENDENCIES: Important external libraries or components it relies on
+
 - Every function, class, or significant code block MUST have a detailed header comment that explains:
 
   1. PURPOSE: What it does and why it exists in business/functional terms
@@ -113,12 +123,24 @@ This system helps students and faculty monitor, book, and manage library spaces 
   4. ASSUMPTIONS: Any preconditions that must be true for the code to work
   5. EDGE CASES: How special situations are handled
 
+- Use SECTION COMMENTS to organize code into logical blocks (like "STATE MANAGEMENT" or "RENDERING LOGIC")
+
+- For React components specifically, comment on:
+
+  - Props and their purpose/constraints
+  - State variables and what they control
+  - Effect dependencies and why they're needed
+  - Conditional rendering logic
+  - Event handlers and their purpose
+  - Component lifecycle considerations
+
 - Include IMPLEMENTATION COMMENTS throughout the code that explain:
 
   - WHY specific approaches were chosen (not just what the code does)
   - The REASONING behind design decisions
   - WARNINGS about potential pitfalls or non-obvious behaviors
   - PERFORMANCE considerations for resource-intensive operations
+  - ACCESSIBILITY considerations for UI elements
 
 - For SQL queries, comment on:
 
@@ -136,7 +158,11 @@ This system helps students and faculty monitor, book, and manage library spaces 
 - Never leave "magic numbers" or constants without explanatory comments
 - Document any workarounds or temporary solutions with TODOs and explanations
 - For domain-specific code, include business context that explains WHY a rule exists
-- Comment on security considerations explicitly when
+- Comment on security considerations explicitly when relevant
+- For UI components, explain the purpose of key styling decisions and their relationship to UX goals
+
+- COMMENT DENSITY: Aim for approximately one meaningful comment for every 3-4 lines of code in complex sections
+- VISUAL STRUCTURE: Use comment blocks to improve code scanability and create clear visual separation between logical sections
 
 # Comment Maintenance
 

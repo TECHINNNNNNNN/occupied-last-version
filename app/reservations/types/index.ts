@@ -54,6 +54,5 @@ export interface ReservationFormData {
   numPeople: number;
 }
 
-export interface MyBookingsProps {
-  onCancelBooking: (reservationId: string) => Promise<void>;
-} 
+// MyBookings component manages its own state and handles cancellation internally
+export type MyBookingsProps = Record<never, never>; 
