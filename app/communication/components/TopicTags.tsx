@@ -3,21 +3,25 @@
 /**
  * TOPIC TAGS COMPONENT
  * 
- * This component displays a list of topic tags (hashtags) associated with a post.
- * It renders each topic as a clickable pill/badge with a '#' prefix.
+ * Displays topic hashtags associated with a post.
+ * 
+ * PURPOSE:
+ * Shows topic categorization for posts, helping users identify
+ * the post subject and providing visual organization.
  * 
  * CONTEXT:
- * Part of the communication platform's categorization system, allowing users
- * to discover related content through topics/hashtags.
+ * Part of the PostCard component, displaying hashtags that
+ * were automatically extracted from post content.
  * 
  * DATA FLOW:
- * Receives an array of topic objects and renders them as interactive elements.
+ * - Receives array of Topic objects from parent
+ * - Renders each as an interactive tag with # prefix
  * 
  * KEY DEPENDENCIES:
- * - Topic interface from mockCommunicationData
+ * - Topic type from communicationTypes
  */
 
-import { Topic } from "../utils/mockCommunicationData";
+import { Topic } from "../types/communicationTypes";
 
 interface TopicTagsProps {
   topics: Topic[];

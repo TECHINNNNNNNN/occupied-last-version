@@ -1,25 +1,27 @@
-"use client";
-
 /**
  * ZONE SELECTOR COMPONENT
  * 
- * This component provides a dropdown selection for library zones.
- * Users can tag a specific zone in the library when creating a post,
- * allowing for location-specific updates and filtering.
+ * Dropdown selection for library zones when creating or filtering communication posts.
+ * 
+ * PURPOSE:
+ * Allows users to tag their posts with specific library locations, providing
+ * context to readers about which area is being discussed.
  * 
  * CONTEXT:
- * Part of the communication platform's location tagging system, helping users
- * provide context about which area of the library they're discussing.
+ * Used within the CreatePost component and FilterBar for location-based
+ * content creation and filtering.
  * 
  * DATA FLOW:
- * - Receives the currently selected zone and a callback for when selection changes
- * - Uses mock zone data for the dropdown options
- * - Passes the selected zone object back to the parent component
+ * - Receives zones array from database via props
+ * - Maintains selected zone state and passes selection to parent
+ * - Returns zone ID string (not the full zone object) for database integration
  * 
  * KEY DEPENDENCIES:
- * - shadcn/ui Select components
- * - MOCK_ZONES data from mockCommunicationData
+ * - shadcn/ui Select components for dropdown UI
+ * - Zone type from communicationTypes
  */
+
+"use client";
 
 import {
   Select,
@@ -28,21 +30,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MOCK_ZONES, Zone } from "../utils/mockCommunicationData";
+import { Zone } from "../types/communicationTypes";
 
 interface ZoneSelectorProps {
-  selectedZone: Zone | null;
-  onSelectZone: (zone: Zone | null) => void;
+  zones: Zone[];
+  selectedZone: string | null;
+  onSelectZone: (zoneId: string | null) => void;
 }
 
-/**
- * Dropdown for selecting library zones
- * 
- * @param selectedZone - Currently selected zone or null
- * @param onSelectZone - Callback function when zone selection changes
- * @returns A dropdown component for selecting library zones
- */
 export default function ZoneSelector({ 
+  zones, 
   selectedZone, 
   onSelectZone 
 }: ZoneSelectorProps) {
@@ -58,15 +55,12 @@ export default function ZoneSelector({
       return;
     }
 
-    const zone = MOCK_ZONES.find((zone) => zone.id === zoneId);
-    if (zone) {
-      onSelectZone(zone);
-    }
+    onSelectZone(zoneId);
   };
 
   return (
     <Select 
-      value={selectedZone?.id || "none"} 
+      value={selectedZone || "none"} 
       onValueChange={handleSelectZone}
     >
       <SelectTrigger className="w-[200px]">
@@ -74,7 +68,7 @@ export default function ZoneSelector({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="none">No zone tag</SelectItem>
-        {MOCK_ZONES.map((zone) => (
+        {zones.map((zone) => (
           <SelectItem key={zone.id} value={zone.id}>
             {zone.name} (Floor {zone.floor})
           </SelectItem>

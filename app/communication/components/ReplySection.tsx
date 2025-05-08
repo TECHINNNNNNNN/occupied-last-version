@@ -3,36 +3,39 @@
 /**
  * REPLY SECTION COMPONENT
  * 
- * This component displays replies/comments for a post and provides
- * a form for submitting new replies.
+ * Displays and manages replies/comments for a communication post.
+ * 
+ * PURPOSE:
+ * Enables threaded discussions around posts by showing existing replies
+ * and providing an interface for adding new ones.
  * 
  * CONTEXT:
- * Part of the communication platform's conversation system, enabling
- * threaded discussions under posts.
+ * Appears within post cards when a post has replies or when a user
+ * clicks to view/add replies.
  * 
  * DATA FLOW:
- * - Receives post ID, existing replies, and callback for adding new replies
- * - Manages expand/collapse state for the reply section
- * - Handles reply form submission
+ * - Receives replies data from parent via props
+ * - Manages reply form state locally
+ * - Sends new reply content to parent for database submission
+ * - Formats dates and renders threaded conversation
  * 
  * KEY DEPENDENCIES:
  * - TextareaAutosize for expandable reply input
+ * - Avatar component for user profile images
  * - date-fns for time formatting
- * - Avatar component for user images
  */
 
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { v4 as uuidv4 } from "uuid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import TextareaAutosize from "react-textarea-autosize";
-import { Reply } from "../utils/mockCommunicationData";
+import { Reply } from "../types/communicationTypes";
 
 interface ReplySectionProps {
-  postId: string; // Used for identifying which post the replies belong to (for future API calls)
+  postId: string;
   replies: Reply[];
-  onAddReply: (reply: Reply) => void;
+  onAddReply: (content: string) => Promise<boolean>;
   isExpanded: boolean;
   onToggle: () => void;
 }
@@ -48,7 +51,7 @@ interface ReplySectionProps {
  * @returns A component for viewing and adding replies
  */
 export default function ReplySection({
-  postId, // Currently unused but kept for future implementation with real database
+  postId,
   replies,
   onAddReply,
   isExpanded,
@@ -60,7 +63,7 @@ export default function ReplySection({
 
   /**
    * Handle reply form submission
-   * Creates a new reply object and passes it to the parent component
+   * Submits the reply content to the parent component
    */
   const handleSubmitReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,24 +74,13 @@ export default function ReplySection({
     setIsSubmitting(true);
 
     try {
-      // Create new reply object with current user info
-      // In a real app, this would use actual user data from authentication
-      const newReply: Reply = {
-        id: uuidv4(),
-        user: {
-          id: "user5", // Current user from mock data
-          name: "Current User",
-          avatar: "/avatars/default.jpg",
-        },
-        content: replyContent,
-        createdAt: new Date(),
-      };
-
-      // Call the parent handler to add the reply to the post
-      onAddReply(newReply);
+      // Pass the reply content to the parent handler
+      const success = await onAddReply(replyContent);
 
       // Reset form after successful submission
-      setReplyContent("");
+      if (success) {
+        setReplyContent("");
+      }
     } catch (error) {
       console.error("Error creating reply:", error);
     } finally {
@@ -125,7 +117,7 @@ export default function ReplySection({
                 <div className="flex justify-between items-start">
                   <span className="font-medium text-xs">{reply.user.name}</span>
                   <span className="text-gray-500 text-xs">
-                    {formatDistanceToNow(new Date(reply.createdAt), {
+                    {formatDistanceToNow(reply.createdAt, {
                       addSuffix: true,
                     })}
                   </span>

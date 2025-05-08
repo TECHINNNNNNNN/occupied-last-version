@@ -46,10 +46,9 @@ export default function ExpirationTimer({ expiresAt }: ExpirationTimerProps) {
     // Calculate remaining time and set appropriate display text
     const calculateTimeLeft = () => {
       const now = new Date();
-      const expirationDate = new Date(expiresAt);
 
       // Check if already expired
-      if (now >= expirationDate) {
+      if (now >= expiresAt) {
         setTimeLeft("Expired");
         setPercentage(0);
         return;
@@ -57,11 +56,11 @@ export default function ExpirationTimer({ expiresAt }: ExpirationTimerProps) {
 
       // Calculate total duration (assuming 1 hour is default if not specified)
       // This is used to calculate the percentage remaining for the visual indicator
-      const creationTime = expirationDate.getTime() - 60 * 60 * 1000; 
-      const totalDuration = expirationDate.getTime() - creationTime;
+      const creationTime = expiresAt.getTime() - 60 * 60 * 1000; 
+      const totalDuration = expiresAt.getTime() - creationTime;
 
       // Calculate remaining time
-      const timeRemaining = expirationDate.getTime() - now.getTime();
+      const timeRemaining = expiresAt.getTime() - now.getTime();
 
       // Calculate percentage remaining (clamped between 0-100%)
       const percentRemaining = (timeRemaining / totalDuration) * 100;
@@ -69,21 +68,21 @@ export default function ExpirationTimer({ expiresAt }: ExpirationTimerProps) {
 
       // Format time remaining in a human-readable format
       // Show hours if > 1 hour left
-      const hoursLeft = differenceInHours(expirationDate, now);
+      const hoursLeft = differenceInHours(expiresAt, now);
       if (hoursLeft > 0) {
         setTimeLeft(`${hoursLeft}h left`);
         return;
       }
 
       // Show minutes if > 1 minute left
-      const minutesLeft = differenceInMinutes(expirationDate, now);
+      const minutesLeft = differenceInMinutes(expiresAt, now);
       if (minutesLeft > 0) {
         setTimeLeft(`${minutesLeft}m left`);
         return;
       }
 
       // Show seconds if less than a minute left
-      const secondsLeft = differenceInSeconds(expirationDate, now);
+      const secondsLeft = differenceInSeconds(expiresAt, now);
       setTimeLeft(`${secondsLeft}s left`);
     };
 

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * COMMUNICATION PAGE
  * 
@@ -11,6 +13,9 @@
  * DATA FLOW:
  * - Renders the CommunicationFeed component which handles all data
  *   management and user interactions
+ * 
+ * KEY DEPENDENCIES:
+ * - CommunicationFeed for the main social feed functionality
  */
 
 import CommunicationFeed from "./components/CommunicationFeed";

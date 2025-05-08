@@ -3,79 +3,134 @@
 /**
  * COMMUNICATION FEED COMPONENT
  * 
- * This component manages the main feed of posts in the communication platform.
- * It handles data display, filtering, and user interactions with posts.
+ * Main container for the library communication platform.
+ * 
+ * PURPOSE:
+ * Central component that orchestrates the entire communication feature,
+ * displaying posts, filters, and the post creation form.
  * 
  * CONTEXT:
- * The central component of the communication platform that displays
- * all posts and manages their presentation.
+ * Serves as the primary UI for the communication feature, rendering
+ * all posts and supporting interactions.
  * 
  * DATA FLOW:
- * - Uses the useCommunication hook for data and interaction logic
- * - Renders the create post form and post cards
- * - Passes callbacks to child components
+ * - Uses useCommunication hook to access and modify data
+ * - Receives real-time updates through Supabase subscriptions
+ * - Handles filtering and post interaction (like, reply)
+ * - Manages loading and empty states
  * 
  * KEY DEPENDENCIES:
  * - useCommunication hook for data management
+ * - PostCard for rendering individual posts
+ * - FilterBar for post filtering
  * - CreatePost for post creation
- * - PostCard for displaying posts
- * - FilterBar for content filtering
  */
 
-import { useCommunication } from "../hooks/useCommunication";
 import CreatePost from "./CreatePost";
 import PostCard from "./PostCard";
 import FilterBar from "./FilterBar";
+import { useCommunication } from "../hooks/useCommunication";
+import { Skeleton } from "@/components/ui/skeleton";
 
-/**
- * Main feed component for the communication platform
- * 
- * @returns A component with post creation form and scrollable post feed
- */
 export default function CommunicationFeed() {
-  // Use our custom hook for all communication functionality
-  const {
-    filteredPosts,
-    loading,
-    filter,
+  // Get communication data and functions from our custom hook
+  const { 
+    posts, 
+    zones,
+    topics,
+    loading, 
+    error, 
+    filter, 
     setFilter,
-    createPost,
-    likePost,
+    toggleLike,
     addReply,
+    deletePost,
+    currentUser
   } = useCommunication();
-
-  // Show loading state
-  if (loading) {
-    return <div className="text-center p-8">Loading community posts...</div>;
-  }
 
   return (
     <div className="max-w-2xl mx-auto">
       {/* Post creation form */}
-      <CreatePost onCreatePost={createPost} />
+      <CreatePost />
 
-      {/* Filter bar */}
+      {/* Filtering options */}
       <div className="my-6">
-        <FilterBar currentFilter={filter} onFilterChange={setFilter} />
+        <FilterBar 
+          zones={zones}
+          topics={topics}
+          currentFilter={filter} 
+          onFilterChange={setFilter} 
+        />
       </div>
 
-      {/* Posts feed */}
-      <div className="space-y-6">
-        {filteredPosts.length === 0 ? (
-          <div className="text-center p-8 bg-gray-50 rounded-lg">
-            <p className="text-gray-500">No posts matching your filter.</p>
-          </div>
-        ) : (
-          filteredPosts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onLike={() => likePost(post.id)}
-              onAddReply={(reply) => addReply(post.id, reply)}
-            />
-          ))
-        )}
-      </div>
+      {/* Error state */}
+      {error && (
+        <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6">
+          <p>{error}</p>
+          <button 
+            className="text-sm underline mt-2"
+            onClick={() => window.location.reload()}
+          >
+            Try refreshing the page
+          </button>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {loading && (
+        <div className="space-y-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white p-4 rounded-lg border shadow-sm">
+              <div className="flex items-start gap-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-1/3 mb-2" />
+                  <Skeleton className="h-3 w-1/4 mb-4" />
+                  <Skeleton className="h-20 w-full mb-4" />
+                  <div className="flex gap-4">
+                    <Skeleton className="h-6 w-12" />
+                    <Skeleton className="h-6 w-12" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Post feed */}
+      {!loading && (
+        <div className="space-y-6">
+          {posts.length === 0 ? (
+            <div className="text-center p-8 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">No posts matching your filter.</p>
+              {filter !== "all" && (
+                <button 
+                  className="text-blue-500 mt-2 text-sm"
+                  onClick={() => setFilter("all")}
+                >
+                  View all posts instead
+                </button>
+              )}
+              {filter === "all" && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Be the first to share an update!
+                </p>
+              )}
+            </div>
+          ) : (
+            posts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={() => toggleLike(post.id)}
+                onAddReply={(content) => addReply(post.id, content)}
+                onDelete={currentUser && post.user.id === currentUser.id ? () => deletePost(post.id) : undefined}
+              />
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 } 

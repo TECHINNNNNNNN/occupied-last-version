@@ -3,40 +3,49 @@
 /**
  * FILTER BAR COMPONENT
  * 
- * This component provides filtering options for the communication feed.
- * Users can filter posts by all posts, specific zones, or topics/hashtags.
+ * Provides filtering options for the communication feed by zone or topic.
+ * 
+ * PURPOSE:
+ * Allows users to filter posts by specific zones, topics, or reset to view all,
+ * helping them find relevant content quickly.
  * 
  * CONTEXT:
- * Part of the communication platform's discovery system, helping users
- * find relevant content by filtering the feed.
+ * Appears below the post creation form in the communication feed, providing
+ * a way to explore content categorically.
  * 
  * DATA FLOW:
- * - Receives the current filter state and a callback for when filter changes
- * - Uses Tabs component for the main filter categories
- * - Renders zone and topic filter buttons based on selected tab
+ * - Receives zones and topics data from parent via props
+ * - Manages tab selection state internally
+ * - Sends filter changes back to parent for post filtering
  * 
  * KEY DEPENDENCIES:
- * - shadcn/ui Tabs components
- * - MOCK_ZONES and MOCK_TOPICS data from mockCommunicationData
+ * - shadcn/ui Tabs components for tab interface
+ * - PostFilter type for type-safe filter options
  */
 
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MOCK_ZONES, MOCK_TOPICS } from "../utils/mockCommunicationData";
+import { Zone, Topic, PostFilter } from "../types/communicationTypes";
 
 interface FilterBarProps {
-  currentFilter: string;
-  onFilterChange: (filter: string) => void;
+  zones: Zone[];
+  topics: Topic[];
+  currentFilter: PostFilter;
+  onFilterChange: (filter: PostFilter) => void;
 }
 
 /**
  * Filter selection bar for the communication feed
  * 
+ * @param zones - List of zones
+ * @param topics - List of topics
  * @param currentFilter - Current filter string (format: "all", "zone:{id}", or "topic:{name}")
  * @param onFilterChange - Callback function when filter changes
  * @returns A tabs component with filter options
  */
 export default function FilterBar({ 
+  zones,
+  topics,
   currentFilter, 
   onFilterChange 
 }: FilterBarProps) {
@@ -65,7 +74,7 @@ export default function FilterBar({
    * @param zoneId - The ID of the selected zone
    */
   const handleZoneSelect = (zoneId: string) => {
-    onFilterChange(`zone:${zoneId}`);
+    onFilterChange(`zone:${zoneId}` as PostFilter);
   };
 
   /**
@@ -74,7 +83,7 @@ export default function FilterBar({
    * @param topicName - The name of the selected topic
    */
   const handleTopicSelect = (topicName: string) => {
-    onFilterChange(`topic:${topicName}`);
+    onFilterChange(`topic:${topicName}` as PostFilter);
   };
 
   return (
@@ -95,7 +104,7 @@ export default function FilterBar({
       {/* Zone filter buttons */}
       {selectedTab === "zones" && (
         <div className="flex flex-wrap gap-2 mt-2">
-          {MOCK_ZONES.map((zone) => (
+          {zones.map((zone) => (
             <button
               key={zone.id}
               className={`px-3 py-1 text-sm rounded-full ${
@@ -114,7 +123,7 @@ export default function FilterBar({
       {/* Topic filter buttons */}
       {selectedTab === "topics" && (
         <div className="flex flex-wrap gap-2 mt-2">
-          {MOCK_TOPICS.map((topic) => (
+          {topics.map((topic) => (
             <button
               key={topic.id}
               className={`px-3 py-1 text-sm rounded-full ${

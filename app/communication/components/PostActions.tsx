@@ -3,21 +3,24 @@
 /**
  * POST ACTIONS COMPONENT
  * 
- * This component provides interaction buttons for posts including like, reply, and share.
- * It renders action buttons with counters and handles user interactions.
+ * Interaction buttons for social features on communication posts.
+ * 
+ * PURPOSE:
+ * Provides standardized interaction buttons for liking, replying to,
+ * and sharing posts in the communication platform.
  * 
  * CONTEXT:
- * Part of the communication platform's engagement system, allowing users to
- * interact with posts through standard social media actions.
+ * Part of the PostCard component, displaying at the bottom of each post
+ * to enable user interactions.
  * 
  * DATA FLOW:
- * - Receives post data and callbacks for like and reply actions
+ * - Receives post data and interaction callbacks from parent
  * - Manages share popover state internally
- * - Triggers appropriate callbacks when actions are taken
+ * - Calls parent functions when users take actions
  * 
  * KEY DEPENDENCIES:
- * - shadcn/ui Popover components
- * - react-share for social sharing functionality
+ * - shadcn/ui Popover components for share menu
+ * - Clipboard API for copy link functionality
  */
 
 import { useState } from "react";
@@ -27,7 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Post } from "../utils/mockCommunicationData";
+import { Post } from "../types/communicationTypes";
 
 interface PostActionsProps {
   post: Post;

@@ -97,6 +97,136 @@ export interface Database {
           updated_at?: string
         }
       }
+      // Communication platform tables
+      library_zones: {
+        Row: {
+          id: string
+          name: string
+          capacity: number
+          floor: number
+          description: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          capacity: number
+          floor: number
+          description?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          capacity?: number
+          floor?: number
+          description?: string | null
+        }
+      }
+      communications: {
+        Row: {
+          id: string
+          user_id: string
+          content: string
+          zone_id: string | null
+          occupancy_data: Json | null
+          image_url: string | null
+          expires_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          content: string
+          zone_id?: string | null
+          occupancy_data?: Json | null
+          image_url?: string | null
+          expires_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          content?: string
+          zone_id?: string | null
+          occupancy_data?: Json | null
+          image_url?: string | null
+          expires_at?: string
+          created_at?: string
+        }
+      }
+      reactions: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          type: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          type: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          type?: string
+          created_at?: string
+        }
+      }
+      replies: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          content: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          content?: string
+          created_at?: string
+        }
+      }
+      topics: {
+        Row: {
+          id: string
+          name: string
+        }
+        Insert: {
+          id?: string
+          name: string
+        }
+        Update: {
+          id?: string
+          name?: string
+        }
+      }
+      post_topics: {
+        Row: {
+          post_id: string
+          topic_id: string
+        }
+        Insert: {
+          post_id: string
+          topic_id: string
+        }
+        Update: {
+          post_id?: string
+          topic_id?: string
+        }
+      }
     }
     Functions: {
       check_reservation_overlap: {

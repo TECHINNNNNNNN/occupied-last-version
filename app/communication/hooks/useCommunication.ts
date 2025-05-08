@@ -1,152 +1,273 @@
 /**
- * USE COMMUNICATION HOOK
+ * COMMUNICATION HOOK
  * 
- * This custom hook encapsulates the state and logic for the communication platform.
- * It provides a reusable way to access posts, filtering, and interaction functions.
+ * Custom hook for managing communication data from Supabase.
+ * 
+ * PURPOSE:
+ * Provides state management and data fetching logic for the communication feature,
+ * abstracting the UI components from the data layer.
  * 
  * CONTEXT:
- * Centralizes the communication platform's data management and business logic,
- * making it easier to reuse across different components.
+ * Acts as middleware between UI components and Supabase service,
+ * handling data loading, refresh, filtering, and real-time updates.
  * 
  * DATA FLOW:
- * - Manages posts state and loading state
- * - Provides functions for filtering and interacting with posts
- * - Handles post expiration automatically
+ * - Components call this hook to access and modify communication data
+ * - Hook calls Supabase service methods to perform database operations
+ * - Hook maintains local state for filtering and caching
+ * - Hook subscribes to real-time updates when needed
  * 
  * KEY DEPENDENCIES:
- * - React hooks for state management
- * - generateMockPosts for demo data
+ * - React hooks (useState, useEffect, useCallback)
+ * - Supabase client for real-time subscriptions
+ * - Communication service for CRUD operations
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { generateMockPosts, Post, Reply } from "../utils/mockCommunicationData";
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import * as communicationService from '../services/communicationService';
+import { Post, User, Zone, Topic, PostFilter } from '../types/communicationTypes';
+import { extractHashtags } from '../utils/extractHashtags';
 
-/**
- * Custom hook for communication platform functionality
- * 
- * @returns Object containing posts data and interaction functions
- */
 export function useCommunication() {
-  // Post and loading state
+  // State for posts and loading status
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // 'all', 'zone:{zoneId}', 'topic:{topicName}'
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<PostFilter>('all');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  /**
-   * Remove posts that have expired
-   * Called periodically to clean up the feed
-   */
+  // Initialize data and subscriptions
+  useEffect(() => {
+    const initData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Get current user
+        const user = await communicationService.getCurrentUser();
+        setCurrentUser(user);
+        
+        // Load zones, topics, and posts
+        const [zonesData, topicsData, postsData] = await Promise.all([
+          communicationService.getZones(),
+          communicationService.getTopics(),
+          communicationService.getPosts()
+        ]);
+        
+        setZones(zonesData);
+        setTopics(topicsData);
+        setPosts(postsData);
+      } catch (err) {
+        console.error('Error initializing communication data:', err);
+        setError('Failed to load communication data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initData();
+
+    // Subscribe to real-time updates
+    const postsSubscription = supabase
+      .channel('communications_channel')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'communications' 
+      }, async () => {
+        // Refresh all posts when any change happens
+        // This is simpler than handling each change type individually
+        try {
+          const refreshedPosts = await communicationService.getPosts();
+          setPosts(refreshedPosts);
+        } catch (err) {
+          console.error('Error refreshing posts after real-time update:', err);
+        }
+      })
+      .subscribe();
+
+    // Cleanup function to unsubscribe
+    return () => {
+      supabase.removeChannel(postsSubscription);
+    };
+  }, []);
+
+  // Function to check and remove expired posts
   const removeExpiredPosts = useCallback(() => {
     const now = new Date();
     setPosts((currentPosts) =>
       currentPosts.filter((post) => {
-        return !post.expiresAt || new Date(post.expiresAt) > now;
+        return !post.expiresAt || post.expiresAt > now;
       })
     );
   }, []);
 
-  /**
-   * Load initial posts data
-   * In a real app, this would fetch from an API
-   */
+  // Set up interval to check for expired posts every minute
   useEffect(() => {
-    // Generate mock data
-    const mockPosts = generateMockPosts(15);
-
-    // Filter out already expired posts on initial load
-    const now = new Date();
-    const validPosts = mockPosts.filter((post) => {
-      return !post.expiresAt || new Date(post.expiresAt) > now;
-    });
-
-    setPosts(validPosts);
-    setLoading(false);
-
-    // Set up interval to check for expired posts every minute
     const intervalId = setInterval(removeExpiredPosts, 60000);
-
-    // Clean up interval on unmount
     return () => clearInterval(intervalId);
   }, [removeExpiredPosts]);
 
-  /**
-   * Add a new post to the feed
-   * 
-   * @param newPost - The new post object to add
-   */
-  const createPost = (newPost: Post) => {
-    setPosts([newPost, ...posts]);
-  };
-
-  /**
-   * Toggle like status on a post
-   * 
-   * @param postId - ID of the post to like/unlike
-   */
-  const likePost = (postId: string) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            liked: !post.liked,
-            likeCount: post.liked ? post.likeCount - 1 : post.likeCount + 1,
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  /**
-   * Add a reply to a post
-   * 
-   * @param postId - ID of the post to add reply to
-   * @param reply - Reply object to add
-   */
-  const addReply = (postId: string, reply: Reply) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            replies: [...post.replies, reply],
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  /**
-   * Get filtered posts based on the current filter
-   */
-  const filteredPosts = (() => {
-    if (filter === "all") return posts;
-
-    if (filter.startsWith("zone:")) {
-      const zoneId = filter.split(":")[1];
-      return posts.filter((post) => post.zone && post.zone.id === zoneId);
+  // Refresh posts data
+  const refreshPosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const refreshedPosts = await communicationService.getPosts();
+      setPosts(refreshedPosts);
+    } catch (err) {
+      console.error('Error refreshing posts:', err);
+      setError('Failed to refresh posts. Please try again later.');
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    if (filter.startsWith("topic:")) {
-      const topicName = filter.split(":")[1];
-      return posts.filter((post) => 
-        post.topics.some((topic) => topic.name === topicName)
+  // Create new post
+  const createPost = useCallback(async (
+    content: string,
+    selectedZoneId: string | null,
+    imageUrl: string | null,
+    expiresInHours: number
+  ) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Extract hashtags from content
+      const hashtags = extractHashtags(content).map(tag => tag.substring(1)); // Remove # prefix
+      
+      // Calculate expiration date
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+      
+      // Create post in database
+      await communicationService.createPost(
+        content,
+        selectedZoneId,
+        imageUrl,
+        expiresAt,
+        hashtags
       );
+      
+      // Refresh posts to show the new one
+      await refreshPosts();
+      
+      return true;
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setError('Failed to create post. Please try again later.');
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [refreshPosts]);
+
+  // Like/unlike a post
+  const toggleLike = useCallback(async (postId: string) => {
+    try {
+      // Optimistically update UI
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          const updatedLiked = !post.liked;
+          const updatedLikeCount = updatedLiked 
+            ? post.likeCount + 1 
+            : post.likeCount - 1;
+          
+          return {
+            ...post,
+            liked: updatedLiked,
+            likeCount: updatedLikeCount
+          };
+        }
+        return post;
+      }));
+      
+      // Perform actual API call
+      await communicationService.toggleLike(postId);
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      // Revert optimistic update on error
+      await refreshPosts();
+      setError('Failed to update like. Please try again later.');
+    }
+  }, [refreshPosts]);
+
+  // Add a reply to a post
+  const addReply = useCallback(async (postId: string, content: string) => {
+    try {
+      // Call API to add reply
+      const newReply = await communicationService.addReply(postId, content);
+      
+      // Update local state
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            replies: [...post.replies, newReply]
+          };
+        }
+        return post;
+      }));
+      
+      return true;
+    } catch (err) {
+      console.error('Error adding reply:', err);
+      setError('Failed to add reply. Please try again later.');
+      return false;
+    }
+  }, []);
+
+  // Delete a post
+  const deletePost = useCallback(async (postId: string) => {
+    try {
+      // Call API to delete post
+      await communicationService.deletePost(postId);
+      
+      // Update local state
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      
+      return true;
+    } catch (err) {
+      console.error('Error deleting post:', err);
+      setError('Failed to delete post. Please try again later.');
+      return false;
+    }
+  }, []);
+
+  // Filter posts based on current filter
+  const filteredPosts = posts.filter((post) => {
+    if (filter === 'all') return true;
+
+    if (filter.startsWith('zone:')) {
+      const zoneId = filter.split(':')[1];
+      return post.zone && post.zone.id === zoneId;
     }
 
-    return posts;
-  })();
+    if (filter.startsWith('topic:')) {
+      const topicName = filter.split(':')[1];
+      return post.topics.some((topic) => topic.name === topicName);
+    }
+
+    return true;
+  });
 
   return {
-    posts,           // All posts
-    filteredPosts,   // Posts filtered by current filter
-    loading,         // Loading state
-    filter,          // Current filter string
-    setFilter,       // Function to change filter
-    createPost,      // Function to add a new post
-    likePost,        // Function to like/unlike a post
-    addReply,        // Function to add a reply to a post
+    posts: filteredPosts,
+    zones,
+    topics,
+    loading,
+    error,
+    filter,
+    currentUser,
+    isSubmitting,
+    setFilter,
+    createPost,
+    toggleLike,
+    addReply,
+    deletePost,
+    refreshPosts,
   };
 } 

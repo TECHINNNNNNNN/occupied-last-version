@@ -1,0 +1,10 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#f0f0f0" />
+  <g>
+    <rect x="150" y="100" width="100" height="100" fill="#e0e0e0" stroke="#d0d0d0" stroke-width="2" />
+    <line x1="150" y1="100" x2="250" y2="200" stroke="#d0d0d0" stroke-width="2" />
+    <line x1="250" y1="100" x2="150" y2="200" stroke="#d0d0d0" stroke-width="2" />
+    <circle cx="200" cy="150" r="30" fill="none" stroke="#d0d0d0" stroke-width="2" />
+  </g>
+  <text x="200" y="230" font-family="Arial" font-size="14" text-anchor="middle" fill="#a0a0a0">Image not available</text>
+</svg> 
