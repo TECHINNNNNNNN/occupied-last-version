@@ -104,6 +104,10 @@ This system helps students and faculty monitor, book, and manage library spaces 
   4. Wait for my confirmation before proceeding
   5. I will download for you
 
+# superbase
+
+1. Do not run the Suberbase CLI .I will do deal with the database using UI in the website insted
+
 # Enhanced Commenting Standards
 
 - Aim for comment-to-code ratio of 30-40% for educational and complex codebases
@@ -193,3 +197,7 @@ This system helps students and faculty monitor, book, and manage library spaces 
 - For database concepts, networking, or other infrastructure topics, provide extra context since these are often less covered in early CS courses
 - When explaining library-specific functions, briefly explain the underlying CS concept they're built on
 - Link concepts back to fundamental CS principles I would have learned in first/second year
+
+# File location
+
+- All of my secret keys are stored in .env.local file in the root directory if you need me to do anything with the secret keys or URLs tell me. I will do it for you
