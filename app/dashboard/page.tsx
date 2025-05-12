@@ -11,7 +11,6 @@ const features = [
   { name: 'Occupancy', href: '/occupancy', description: 'View real-time and historical library occupancy.' },
   { name: 'Reservations', href: '/reservations', description: 'Book and manage study rooms.' },
   { name: 'Communication', href: '/communication', description: 'Join discussions and communicate with peers.' },
-  { name: 'Analytics', href: '/analytics', description: 'Explore usage analytics and reports.' },
 ]
 
 export default function Dashboard() {

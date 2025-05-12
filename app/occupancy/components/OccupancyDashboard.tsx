@@ -31,28 +31,15 @@ import {
 } from "@/components/ui/card";
 import {
   getOverallOccupancy,
-  generateCurrentOccupancy,
   generateHistoricalData,
 } from "@/utils/mockOccupancyData";
 import OccupancyGauge from "./OccupancyGauge";
-import OccupancyZones from "./OccupancyZones";
 import OccupancyTrends from "./OccupancyTrends";
 
 // Define types for the state variables
 interface OverallData {
   occupied: number;
   capacity: number;
-  percentage: number;
-  status: string;
-  zones: Array<ZoneData>;
-}
-
-interface ZoneData {
-  id: string;
-  name: string;
-  capacity: number;
-  floor: number;
-  current: number;
   percentage: number;
   status: string;
 }
@@ -64,13 +51,6 @@ interface HistoricalDataPoint {
   overall: number;
   totalOccupancy: number;
   totalCapacity: number;
-  zones: Array<{
-    id: string;
-    name: string;
-    count: number;
-    capacity: number;
-    percentage: number;
-  }>;
 }
 
 export default function OccupancyDashboard() {
@@ -78,12 +58,10 @@ export default function OccupancyDashboard() {
    * STATE MANAGEMENT
    * 
    * overallData: Aggregated library-wide occupancy metrics
-   * zonesData: Zone-specific occupancy information
    * historicalData: Time-series data for trend visualization
    * isLoading: Tracks data loading state for UI feedback
    */
   const [overallData, setOverallData] = useState<OverallData | null>(null);
-  const [zonesData, setZonesData] = useState<ZoneData[]>([]);
   const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -100,11 +78,9 @@ export default function OccupancyDashboard() {
       try {
         // In a production app, these would be API calls to backend services
         const overall = getOverallOccupancy();
-        const zones = generateCurrentOccupancy();
         const historical = generateHistoricalData(12); // Last 12 hours
 
         setOverallData(overall);
-        setZonesData(zones);
         setHistoricalData(historical);
       } catch (error) {
         console.error("Error fetching occupancy data:", error);
@@ -168,17 +144,6 @@ export default function OccupancyDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Zone Details Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Zone Occupancy</CardTitle>
-          <CardDescription>Current occupancy by library zone</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <OccupancyZones data={zonesData} />
-        </CardContent>
-      </Card>
     </div>
   );
 } 

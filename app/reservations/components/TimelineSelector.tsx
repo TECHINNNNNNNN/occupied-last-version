@@ -251,18 +251,34 @@ const TimelineSelector = () => {
   }, [selectedRoomId, setSelectedSlots, user]);
 
   /**
+   * Helper function to determine if a slot is consecutive to the current selection
+   * @param {string[]} selected - Currently selected slots (ISO strings)
+   * @param {string} candidate - Slot to check (ISO string)
+   * @returns {boolean} True if candidate is consecutive to selected
+   */
+  function isConsecutive(selected: string[], candidate: string): boolean {
+    if (selected.length === 0) return true;
+    // Sort slots for comparison
+    const sorted = [...selected].sort();
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    const candidateTime = parseISO(candidate).getTime();
+    const firstTime = parseISO(first).getTime();
+    const lastTime = parseISO(last).getTime();
+    // Check if candidate is immediately before or after the current block
+    return (
+      candidateTime === firstTime - SLOT_INTERVAL * 60 * 1000 ||
+      candidateTime === lastTime + SLOT_INTERVAL * 60 * 1000
+    );
+  }
+
+  /**
    * Handles time slot selection with business rules enforcement
-   * 
-   * BEHAVIOR:
-   * - Allows toggling selection of a single slot
-   * - Enforces consecutive selection when selecting multiple slots
+   *
+   * ENFORCES:
+   * - Max 4 consecutive slots (2 hours)
+   * - Only allows adding slots that are consecutive to the current selection
    * - Provides user feedback for invalid selections
-   * 
-   * BUSINESS RULES:
-   * - Selected time slots must be consecutive
-   * - Non-consecutive selections are replaced rather than appended
-   * 
-   * @param {string} slot - The time slot being clicked
    */
   const handleSlotClick = (slot: string) => {
     // If slot is already selected, remove it
@@ -270,39 +286,29 @@ const TimelineSelector = () => {
       setSelectedSlots(selectedSlots.filter(s => s !== slot));
       return;
     }
-    
+
     // If no slots are selected yet, just add this one
     if (selectedSlots.length === 0) {
       setSelectedSlots([slot]);
       return;
     }
-    
-    // For consecutive slot selection, we need to sort current slots
-    const allSlots = [...selectedSlots, slot].sort();
-    
-    // Check if slots are consecutive by comparing time differences
-    let isConsecutive = true;
-    for (let i = 0; i < allSlots.length - 1; i++) {
-      const current = parseISO(allSlots[i]);
-      const next = parseISO(allSlots[i + 1]);
-      const diff = (next.getTime() - current.getTime()) / (1000 * 60);
-      
-      // If time difference is not exactly SLOT_INTERVAL, slots aren't consecutive
-      if (diff !== SLOT_INTERVAL) {
-        isConsecutive = false;
-        break;
-      }
+
+    // If already 4 slots selected, prevent adding more
+    if (selectedSlots.length === 4) {
+      toast.info('You can only select up to 2 hours (4 consecutive slots).');
+      return;
     }
-    
-    if (isConsecutive) {
-      // If consecutive, update with all slots
-      setSelectedSlots(allSlots);
-    } else {
-      // If not consecutive, replace with just this new slot
-      // This provides a better UX than simply rejecting the selection
+
+    // Only allow adding slots that are consecutive to the current selection
+    if (!isConsecutive(selectedSlots, slot)) {
       setSelectedSlots([slot]);
-      toast.info('Selected time slots must be consecutive');
+      toast.info('Selected time slots must be consecutive.');
+      return;
     }
+
+    // Add the slot and sort
+    const allSlots = [...selectedSlots, slot].sort();
+    setSelectedSlots(allSlots);
   };
 
   // Display loading state with skeleton UI
@@ -353,19 +359,36 @@ const TimelineSelector = () => {
             const isSelected = selectedSlots.includes(slot);
             const isPast = !isAvailable && !reservedSlots.includes(slot);
             
+            // --- NEW LOGIC: Disable slots that break the 2-hour/4-consecutive rule ---
+            let disableSlot = false;
+            if (!isAvailable) {
+              disableSlot = true;
+            } else if (selectedSlots.length > 0) {
+              // If already 4 slots, disable all others
+              if (selectedSlots.length === 4 && !isSelected) {
+                disableSlot = true;
+              } else if (
+                // If not selected, only enable if consecutive to current selection
+                !isSelected &&
+                (selectedSlots.length === 0 || !isConsecutive(selectedSlots, slot))
+              ) {
+                disableSlot = true;
+              }
+            }
+
             return (
               <button
                 key={slot}
                 className={`px-2 py-3 rounded-md text-sm font-medium transition-colors ${
                   isSelected
                     ? 'bg-indigo-600 text-white' // Selected - highlighted in brand color
-                    : isAvailable
+                    : isAvailable && !disableSlot
                     ? 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700' // Available - neutral/clickable
                     : isPast
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed' // Past/unavailable - dimmed
-                    : 'bg-red-100 text-red-800 cursor-not-allowed' // Reserved - red warning color
+                    : 'bg-red-100 text-red-800 cursor-not-allowed' // Reserved or disabled - red warning color
                 }`}
-                disabled={!isAvailable}
+                disabled={disableSlot}
                 onClick={() => handleSlotClick(slot)}
               >
                 {format(parseISO(slot), 'h:mm a')}
