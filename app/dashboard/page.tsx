@@ -251,6 +251,14 @@ export default function Dashboard() {
     }
   };
 
+  // Helper function to get color based on occupancy percentage
+  function getStatusColor(percentage: number): string {
+    if (percentage < 0.3) return "#22c55e"; // green
+    if (percentage < 0.6) return "#f59e0b"; // amber
+    if (percentage < 0.85) return "#f97316"; // orange
+    return "#ef4444"; // red
+  }
+
   return (
     // Main container with reduced padding for better space usage
     <div className="min-h-screen flex flex-col bg-gray-50 p-4">
