@@ -31,6 +31,8 @@ import PostCard from "./PostCard";
 import FilterBar from "./FilterBar";
 import { useCommunication } from "../hooks/useCommunication";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 export default function CommunicationFeed() {
   // Get communication data and functions from our custom hook
@@ -45,7 +47,8 @@ export default function CommunicationFeed() {
     toggleLike,
     addReply,
     deletePost,
-    currentUser
+    currentUser,
+    refreshPosts
   } = useCommunication();
 
   return (
@@ -54,13 +57,23 @@ export default function CommunicationFeed() {
       <CreatePost />
 
       {/* Filtering options */}
-      <div className="my-6">
+      <div className="my-6 flex justify-between items-center">
         <FilterBar 
           zones={zones}
           topics={topics}
           currentFilter={filter} 
           onFilterChange={setFilter} 
         />
+         <Button
+          variant="outline"
+          size="sm"
+          onClick={refreshPosts}
+          disabled={loading}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Error state */}
