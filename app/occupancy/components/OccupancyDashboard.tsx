@@ -19,6 +19,7 @@
 
 "use client";
 
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -26,17 +27,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOccupancy } from "@/contexts/OccupancyContext";
 import OccupancyGauge from "./OccupancyGauge";
 import OccupancyTrends from "./OccupancyTrends";
+import OccupancyWeeklyTrends from "./OccupancyWeeklyTrends";
+import OccupancyTwoDayTrends from "./OccupancyTwoDayTrends";
+import OccupancyPrediction from "./OccupancyPrediction";
 
 export default function OccupancyDashboard() {
+  /**
+   * STATE MANAGEMENT
+   * 
+   * activeTab: Tracks which trend view is currently active
+   */
+  const [activeTab, setActiveTab] = useState<string>("today");
+
   /**
    * CONTEXT DATA
    * 
    * Use the shared OccupancyContext to get consistent data across the app
    */
-  const { currentOccupancy, historicalData, isLoading, lastUpdated } = useOccupancy();
+  const { 
+    currentOccupancy, 
+    historicalData, 
+    weeklyData,
+    twoDayData,
+    predictionData,
+    isLoading, 
+    lastUpdated 
+  } = useOccupancy();
 
   /**
    * LOADING STATE RENDERING
@@ -79,14 +99,37 @@ export default function OccupancyDashboard() {
           </CardContent>
         </Card>
 
-        {/* Historical Trends */}
+        {/* Trends Card with Tabs */}
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Occupancy Trends</CardTitle>
             <CardDescription>Occupancy patterns over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <OccupancyTrends data={historicalData} />
+            <Tabs defaultValue="today" value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-4">
+                <TabsTrigger value="today">Today</TabsTrigger>
+                <TabsTrigger value="2day">48-Hour</TabsTrigger>
+                <TabsTrigger value="weekly">Weekly</TabsTrigger>
+                <TabsTrigger value="prediction">Prediction</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="today" className="m-0">
+                <OccupancyTrends data={historicalData} />
+              </TabsContent>
+              
+              <TabsContent value="2day" className="m-0">
+                <OccupancyTwoDayTrends data={twoDayData} />
+              </TabsContent>
+              
+              <TabsContent value="weekly" className="m-0">
+                <OccupancyWeeklyTrends data={weeklyData} />
+              </TabsContent>
+              
+              <TabsContent value="prediction" className="m-0">
+                <OccupancyPrediction data={predictionData} />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

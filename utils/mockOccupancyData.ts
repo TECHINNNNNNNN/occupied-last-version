@@ -9,6 +9,9 @@
  *   - Current occupancy data for all zones
  *   - Historical occupancy trends
  *   - Overall library occupancy statistics
+ *   - Weekly occupancy trends
+ *   - 2-Day detailed occupancy trends
+ *   - Occupancy predictions
  * 
  * KEY DEPENDENCIES: None - uses native JavaScript APIs for data generation
  * 
@@ -298,4 +301,208 @@ export function getOverallOccupancy() {
     status,
     zones: zoneData,
   };
+}
+
+/**
+ * Generates weekly occupancy data for trend charts
+ * 
+ * PURPOSE: Creates time-series data showing occupancy patterns over a 7-day period
+ * 
+ * RETURNS: Array of daily data points containing:
+ *   - date: ISO timestamp for the day
+ *   - day: Day of the week
+ *   - formattedDay: Formatted day string (e.g., "Mon")
+ *   - peakOccupancy: Peak occupancy value for the day (0-1)
+ *   - averageOccupancy: Average occupancy value for the day (0-1)
+ *   - totalVisitors: Estimated total visitors for the day
+ * 
+ * IMPLEMENTATION: Creates a series of daily data points for the past week,
+ * generating plausible occupancy data for each day in a deterministic way.
+ */
+export function generateWeeklyData() {
+  const data = [];
+  const now = new Date();
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  
+  // Get total library capacity
+  const totalCapacity = LIBRARY_ZONES.reduce((sum, zone) => sum + zone.capacity, 0);
+
+  // Generate data for each day of the past week
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(now);
+    date.setDate(now.getDate() - i);
+    date.setHours(0, 0, 0, 0);
+    
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    
+    // Generate peak occupancy (higher on weekdays)
+    const peakBaseFactor = isWeekend ? 0.6 : 0.85;
+    const peakVariation = deterministicRandom(12, 0, i, 0.5) * 0.2; // Up to 20% variation
+    const peakOccupancy = Math.min(0.95, peakBaseFactor + peakVariation);
+    
+    // Generate average occupancy (around 70% of peak)
+    const averageVariation = deterministicRandom(15, 0, i, 0.3) * 0.1; // Up to 10% variation
+    const averageOccupancy = peakOccupancy * (0.65 + averageVariation);
+    
+    // Calculate estimated total visitors
+    // Assume average visitor stays 2 hours and library is open 14 hours
+    const turnoverFactor = 14 / 2;
+    const totalVisitors = Math.floor(totalCapacity * averageOccupancy * turnoverFactor);
+    
+    data.push({
+      date: date.toISOString(),
+      day: dayOfWeek,
+      formattedDay: days[dayOfWeek],
+      peakOccupancy,
+      averageOccupancy,
+      totalVisitors,
+    });
+  }
+  
+  // Sort chronologically (oldest to newest)
+  return data.sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+}
+
+/**
+ * Generates detailed 2-day occupancy data with hourly resolution
+ * 
+ * PURPOSE: Creates time-series data showing detailed occupancy patterns over the last 48 hours
+ * 
+ * RETURNS: Array of hourly data points containing:
+ *   - time: ISO timestamp
+ *   - formattedTime: Formatted time string (e.g., "14:00")
+ *   - formattedDay: Abbreviated day name (e.g., "Mon")
+ *   - overall: Overall library occupancy as fraction (0-1)
+ *   - totalOccupancy: Total number of people in library
+ * 
+ * IMPLEMENTATION: Creates a series of hourly timestamps for the last 48 hours,
+ * generating plausible occupancy data for each time point in a deterministic way.
+ */
+export function generateTwoDayData() {
+  const data = [];
+  const now = new Date();
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  
+  // Generate data for every hour of the last 48 hours
+  for (let i = 0; i < 48; i++) {
+    const time = new Date(now);
+    time.setHours(now.getHours() - i);
+    time.setMinutes(0, 0, 0); // Start of the hour
+    
+    const hour = time.getHours();
+    const dayOfWeek = time.getDay();
+    
+    // Skip hours when library is closed (8am-10pm opening hours)
+    if (hour < 8 || hour > 22) continue;
+    
+    // Calculate total library capacity
+    const totalCapacity = LIBRARY_ZONES.reduce((sum, zone) => sum + zone.capacity, 0);
+    
+    // Similar occupancy pattern to hourly data but with day-specific variations
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const dayFactor = isWeekend ? 0.7 : 1;
+    
+    let hourlyFactor;
+    if (hour < 12) {
+      hourlyFactor = 0.3 + (hour - 8) * 0.1; // Morning ramp up
+    } else if (hour < 18) {
+      hourlyFactor = 0.7; // Afternoon peak
+    } else {
+      hourlyFactor = 0.8 - (hour - 18) * 0.1; // Evening decline
+    }
+    
+    // Add deterministic variation
+    const dayOffset = i / 24; // Convert hours to fractional days
+    const variationFactor = deterministicRandom(hour, 0, dayOffset, 0.4) * 0.2; // Up to 20% variation
+    
+    // Calculate final occupancy
+    const occupancyFactor = Math.min(0.95, hourlyFactor * dayFactor + variationFactor);
+    const totalOccupancy = Math.floor(totalCapacity * occupancyFactor);
+    
+    data.push({
+      time: time.toISOString(),
+      hour: hour,
+      formattedTime: `${hour}:00`,
+      formattedDay: days[dayOfWeek],
+      dayHour: `${days[dayOfWeek]} ${hour}:00`,
+      overall: occupancyFactor,
+      totalOccupancy,
+      totalCapacity,
+    });
+  }
+  
+  // Sort chronologically (oldest to newest)
+  return data.sort(
+    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+  );
+}
+
+/**
+ * Generates occupancy prediction data for the next 12 hours
+ * 
+ * PURPOSE: Creates predictive occupancy data based on historical patterns
+ * 
+ * RETURNS: Array of hourly prediction data points containing:
+ *   - time: ISO timestamp for future hours
+ *   - formattedTime: Formatted time string (e.g., "14:00")
+ *   - predicted: Predicted occupancy as fraction (0-1)
+ *   - confidence: Confidence level of prediction (0-1)
+ * 
+ * IMPLEMENTATION: Uses current time patterns and historical data models
+ * to project likely future occupancy levels with confidence intervals.
+ */
+export function generatePredictionData() {
+  const data = [];
+  const now = new Date();
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  
+  // Generate predictions for the next 12 hours
+  for (let i = 1; i <= 12; i++) {
+    const time = new Date(now);
+    time.setHours(now.getHours() + i);
+    time.setMinutes(0, 0, 0); // Start of the hour
+    
+    const hour = time.getHours();
+    const dayOfWeek = time.getDay();
+    
+    // Skip hours when library is closed (8am-10pm opening hours)
+    if (hour < 8 || hour > 22) continue;
+    
+    // Base prediction on time pattern
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const dayFactor = isWeekend ? 0.7 : 1;
+    
+    let hourlyFactor;
+    if (hour < 12) {
+      hourlyFactor = 0.3 + (hour - 8) * 0.1; // Morning ramp up
+    } else if (hour < 18) {
+      hourlyFactor = 0.7; // Afternoon peak
+    } else {
+      hourlyFactor = 0.8 - (hour - 18) * 0.1; // Evening decline
+    }
+    
+    // Add variation with deterministic randomness
+    const variationFactor = deterministicRandom(hour, 0, dayOfWeek/7, 0.6) * 0.15;
+    
+    // Calculate predicted occupancy
+    const predicted = Math.min(0.95, hourlyFactor * dayFactor + variationFactor);
+    
+    // Confidence decreases the further we predict
+    const confidence = Math.max(0.5, 1 - (i / 20));
+    
+    data.push({
+      time: time.toISOString(),
+      hour: hour,
+      formattedTime: `${hour}:00`,
+      formattedDay: days[dayOfWeek],
+      dayHour: `${days[dayOfWeek]} ${hour}:00`,
+      predicted,
+      confidence,
+    });
+  }
+  
+  return data;
 } 

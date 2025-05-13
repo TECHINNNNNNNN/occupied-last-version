@@ -22,7 +22,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {
   getOverallOccupancy,
-  generateHistoricalData
+  generateHistoricalData,
+  generateWeeklyData,
+  generateTwoDayData,
+  generatePredictionData
 } from "@/utils/mockOccupancyData";
 
 // Define the occupancy data types
@@ -59,10 +62,46 @@ export interface HistoricalDataPoint {
   }>;
 }
 
+// Define types for weekly trend data
+export interface WeeklyDataPoint {
+  date: string;
+  day: number;
+  formattedDay: string;
+  peakOccupancy: number;
+  averageOccupancy: number;
+  totalVisitors: number;
+}
+
+// Define types for 2-day detailed trend data
+export interface TwoDayDataPoint {
+  time: string;
+  hour: number;
+  formattedTime: string;
+  formattedDay: string;
+  dayHour: string;
+  overall: number;
+  totalOccupancy: number;
+  totalCapacity: number;
+}
+
+// Define types for prediction data
+export interface PredictionDataPoint {
+  time: string;
+  hour: number;
+  formattedTime: string;
+  formattedDay: string;
+  dayHour: string;
+  predicted: number;
+  confidence: number;
+}
+
 // Context interface
 interface OccupancyContextType {
   currentOccupancy: OccupancyData | null;
   historicalData: HistoricalDataPoint[];
+  weeklyData: WeeklyDataPoint[];
+  twoDayData: TwoDayDataPoint[];
+  predictionData: PredictionDataPoint[];
   isLoading: boolean;
   lastUpdated: Date | null;
   refreshData: () => void;
@@ -72,6 +111,9 @@ interface OccupancyContextType {
 const OccupancyContext = createContext<OccupancyContextType>({
   currentOccupancy: null,
   historicalData: [],
+  weeklyData: [],
+  twoDayData: [],
+  predictionData: [],
   isLoading: true,
   lastUpdated: null,
   refreshData: () => {},
@@ -82,6 +124,9 @@ export function OccupancyProvider({ children }: { children: React.ReactNode }) {
   // STATE: Occupancy data state with proper typing
   const [currentOccupancy, setCurrentOccupancy] = useState<OccupancyData | null>(null);
   const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
+  const [weeklyData, setWeeklyData] = useState<WeeklyDataPoint[]>([]);
+  const [twoDayData, setTwoDayData] = useState<TwoDayDataPoint[]>([]);
+  const [predictionData, setPredictionData] = useState<PredictionDataPoint[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -102,6 +147,18 @@ export function OccupancyProvider({ children }: { children: React.ReactNode }) {
       // Components can filter this down as needed
       const historical = generateHistoricalData(12);
       setHistoricalData(historical);
+
+      // Get weekly trend data
+      const weekly = generateWeeklyData();
+      setWeeklyData(weekly);
+
+      // Get detailed 2-day trend data
+      const twoDayTrend = generateTwoDayData();
+      setTwoDayData(twoDayTrend);
+
+      // Get prediction data
+      const prediction = generatePredictionData();
+      setPredictionData(prediction);
 
       // Update last refresh timestamp
       setLastUpdated(new Date());
@@ -133,6 +190,9 @@ export function OccupancyProvider({ children }: { children: React.ReactNode }) {
   const value = {
     currentOccupancy,
     historicalData,
+    weeklyData,
+    twoDayData,
+    predictionData,
     isLoading,
     lastUpdated,
     refreshData: fetchData, // Expose refresh function for manual updates
