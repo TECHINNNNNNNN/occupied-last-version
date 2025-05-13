@@ -52,6 +52,21 @@ export default function Dashboard() {
     role: string;
   } | null>(null);
   
+  // FUNCTION: Get time-based greeting
+  const getTimeBasedGreeting = () => {
+    const currentHour = new Date().getHours();
+    
+    if (currentHour >= 5 && currentHour < 12) {
+      return 'Good morning';
+    } else if (currentHour >= 12 && currentHour < 17) {
+      return 'Good afternoon';
+    } else if (currentHour >= 17 && currentHour < 22) {
+      return 'Good evening';
+    } else {
+      return 'Welcome back';
+    }
+  };
+  
   // EFFECT: Fetch user profile data
   useEffect(() => {
     const fetchProfile = async () => {
@@ -277,9 +292,9 @@ export default function Dashboard() {
         - Added pb-6 to ensure bottom padding when scrolling
       */}
       <div className="max-w-7xl mx-auto flex flex-col w-full h-full gap-4 pb-6">
-        {/* SECTION: Welcome Header - slimmer design */}
-        <div className="w-full mb-2">
-          <h1 className="text-3xl font-bold">Welcome to the Engineering Library!</h1>
+        {/* SECTION: Personalized Welcome Header */}
+        <div className="w-full h-20 mb-6">
+          <h1 className="text-3xl font-bold">{getTimeBasedGreeting()}, {userName}!</h1>
           <p className="text-lg text-gray-600">Monitor, book, and manage your library spaces with ease.</p>
         </div>
 
