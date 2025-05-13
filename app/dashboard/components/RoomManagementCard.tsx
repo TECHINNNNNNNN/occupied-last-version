@@ -27,7 +27,7 @@ const RoomManagementCard = ({
   totalRooms,
 }: RoomManagementCardProps) => {
   return (
-    <div className="col-span-5 bg-white rounded-lg shadow p-4 flex flex-col">
+    <div className="sm:col-span-5 col-span-7 bg-white rounded-lg shadow p-4 flex flex-col">
       <h2 className="text-lg font-semibold mb-1">Room Management</h2>
       
       {/* Quick Actions */}

@@ -304,7 +304,7 @@ export default function Dashboard() {
           - Using grid-rows-[auto] to adapt to content
           - 12-column layout with consistent gap
         */}
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid sm:grid-cols-12 grid-cols-7 gap-4">
           {/* Profile Card */}
           <ProfileCard 
             userName={userName}
