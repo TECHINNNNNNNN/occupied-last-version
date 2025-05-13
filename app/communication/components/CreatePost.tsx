@@ -35,18 +35,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ZoneSelector from "./ZoneSelector";
 import ImageUpload from "./ImageUpload";
 import { useCommunication } from "../hooks/useCommunication";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function CreatePost() {
   // Get communication context
-  const { createPost, zones, currentUser, isSubmitting } = useCommunication();
+  const { createPost, currentUser, isSubmitting } = useCommunication();
 
   // Form state
   const [content, setContent] = useState("");
-  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [expirationType, setExpirationType] = useState("1"); // Default: 1 hour
 
@@ -58,10 +56,10 @@ export default function CreatePost() {
     // Convert expiration time to hours
     const expiresInHours = parseInt(expirationType, 10);
 
-    // Submit post
+    // Submit post - passing null for selectedZoneId since we removed zone selection
     const success = await createPost(
       content,
-      selectedZoneId,
+      null, // No zone selection anymore
       imageUrl,
       expiresInHours
     );
@@ -69,23 +67,18 @@ export default function CreatePost() {
     if (success) {
       // Reset form
       setContent("");
-      setSelectedZoneId(null);
       setImageUrl(null);
     }
-  };
-
-  const handleZoneChange = (zoneId: string | null) => {
-    setSelectedZoneId(zoneId);
   };
 
   const remainingChars = 280 - content.length;
   const isOverLimit = remainingChars < 0;
 
   return (
-    <div className="bg-white p-4 rounded-lg border shadow-sm">
+    <div className="bg-white p-3 sm:p-4 rounded-lg border shadow-sm">
       <form onSubmit={handleSubmit}>
-        <div className="flex items-start gap-3 mb-3">
-          <Avatar>
+        <div className="flex items-start gap-2 sm:gap-3 mb-3">
+          <Avatar className="hidden sm:block">
             <AvatarImage 
               src={currentUser?.avatar || "/avatars/default.jpg"} 
               alt="Your avatar" 
@@ -136,19 +129,13 @@ export default function CreatePost() {
           </div>
         )}
 
-        <div className="flex items-center justify-between border-t pt-3">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-t pt-3 gap-3">
+          <div className="flex flex-wrap items- justify-center gap-2 w-full sm:w-auto">
             <ImageUpload onImageSelected={setImageUrl} />
-            
-            <ZoneSelector
-              zones={zones}
-              selectedZone={selectedZoneId}
-              onSelectZone={handleZoneChange}
-            />
 
-            {/* Add expiration time selector */}
+            {/* Expiration time selector */}
             <Select value={expirationType} onValueChange={setExpirationType}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Expires in" />
               </SelectTrigger>
               <SelectContent>
@@ -162,6 +149,7 @@ export default function CreatePost() {
 
           <Button
             type="submit"
+            className="w-full sm:w-auto"
             disabled={
               isSubmitting || (content.length === 0 && !imageUrl) || isOverLimit
             }

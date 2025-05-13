@@ -22,8 +22,8 @@ import CommunicationFeed from "./components/CommunicationFeed";
 
 export default function CommunicationPage() {
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Library Community</h1>
+    <div className="w-full px-4 py-6 sm:py-8 md:container md:mx-auto">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center sm:text-left">Library Community</h1>
       <CommunicationFeed />
     </div>
   );

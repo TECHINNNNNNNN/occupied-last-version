@@ -80,10 +80,10 @@ export default function PostActions({
   };
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between sm:justify-start sm:gap-4">
       {/* Like button */}
       <button
-        className={`flex items-center gap-1 text-sm ${
+        className={`flex items-center gap-1 text-xs sm:text-sm ${
           post.liked ? "text-red-500" : "text-gray-500"
         }`}
         onClick={onLike}
@@ -95,7 +95,7 @@ export default function PostActions({
 
       {/* Reply button */}
       <button
-        className="flex items-center gap-1 text-sm text-gray-500"
+        className="flex items-center gap-1 text-xs sm:text-sm text-gray-500"
         onClick={onReply}
         aria-label="Reply to post"
       >
@@ -107,15 +107,15 @@ export default function PostActions({
       <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
         <PopoverTrigger asChild>
           <button
-            className="flex items-center gap-1 text-sm text-gray-500"
+            className="flex items-center gap-1 text-xs sm:text-sm text-gray-500"
             onClick={handleShareClick}
             aria-label="Share post"
           >
             <span>🔗</span>
-            <span>Share</span>
+            <span className="hidden sm:inline">Share</span>
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-3">
+        <PopoverContent className="w-auto p-3 max-w-[90vw] sm:max-w-xs">
           <div className="space-y-2">
             <p className="text-sm font-medium mb-2">Share to:</p>
             <div className="flex flex-col gap-2">
@@ -123,7 +123,7 @@ export default function PostActions({
                 onClick={handleCopyLink} 
                 variant="outline" 
                 size="sm" 
-                className="w-full justify-start"
+                className="w-full justify-start text-xs sm:text-sm"
               >
                 📋 Copy link
               </Button>
@@ -131,7 +131,7 @@ export default function PostActions({
                 onClick={() => window.open(`mailto:?subject=Library Update&body=${shareUrl}`, "_blank")}
                 variant="outline" 
                 size="sm" 
-                className="w-full justify-start"
+                className="w-full justify-start text-xs sm:text-sm"
               >
                 ✉️ Email
               </Button>

@@ -47,10 +47,11 @@ export default function ZoneSelector({
   /**
    * Handles zone selection from the dropdown
    * 
-   * @param zoneId - The ID of the selected zone, or "none" to clear selection
+   * @param zoneId - The ID of the selected zone, or empty string to clear selection
    */
   const handleSelectZone = (zoneId: string) => {
-    if (zoneId === "none") {
+    // If the value is an empty string (from clearing the selection), set to null
+    if (!zoneId) {
       onSelectZone(null);
       return;
     }
@@ -60,14 +61,13 @@ export default function ZoneSelector({
 
   return (
     <Select 
-      value={selectedZone || "none"} 
+      value={selectedZone || ""} 
       onValueChange={handleSelectZone}
     >
-      <SelectTrigger className="w-[200px]">
-        <SelectValue placeholder="Tag a library zone" />
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder="Select zone (optional)" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="none">No zone tag</SelectItem>
         {zones.map((zone) => (
           <SelectItem key={zone.id} value={zone.id}>
             {zone.name} (Floor {zone.floor})

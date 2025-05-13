@@ -3,10 +3,10 @@
 /**
  * FILTER BAR COMPONENT
  * 
- * Provides filtering options for the communication feed by zone or topic.
+ * Provides filtering options for the communication feed by topic.
  * 
  * PURPOSE:
- * Allows users to filter posts by specific zones, topics, or reset to view all,
+ * Allows users to filter posts by specific topics or reset to view all,
  * helping them find relevant content quickly.
  * 
  * CONTEXT:
@@ -14,7 +14,7 @@
  * a way to explore content categorically.
  * 
  * DATA FLOW:
- * - Receives zones and topics data from parent via props
+ * - Receives topics data from parent via props
  * - Manages tab selection state internally
  * - Sends filter changes back to parent for post filtering
  * 
@@ -25,10 +25,9 @@
 
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Zone, Topic, PostFilter } from "../types/communicationTypes";
+import { Topic, PostFilter } from "../types/communicationTypes";
 
 interface FilterBarProps {
-  zones: Zone[];
   topics: Topic[];
   currentFilter: PostFilter;
   onFilterChange: (filter: PostFilter) => void;
@@ -37,23 +36,21 @@ interface FilterBarProps {
 /**
  * Filter selection bar for the communication feed
  * 
- * @param zones - List of zones
  * @param topics - List of topics
- * @param currentFilter - Current filter string (format: "all", "zone:{id}", or "topic:{name}")
+ * @param currentFilter - Current filter string (format: "all" or "topic:{name}")
  * @param onFilterChange - Callback function when filter changes
  * @returns A tabs component with filter options
  */
 export default function FilterBar({ 
-  zones,
   topics,
   currentFilter, 
-  onFilterChange 
+  onFilterChange
 }: FilterBarProps) {
-  // Keep track of which tab is selected (all, zones, topics)
+  // Keep track of which tab is selected (all, topics)
   const [selectedTab, setSelectedTab] = useState("all");
 
   /**
-   * Handle tab change (all, zones, topics)
+   * Handle tab change (all, topics)
    * 
    * @param value - The selected tab value
    */
@@ -64,17 +61,7 @@ export default function FilterBar({
     if (value === "all") {
       onFilterChange("all");
     }
-    // Otherwise, keep the current zone/topic filter if appropriate for the tab
-    // or reset to showing all items of that tab category
-  };
-
-  /**
-   * Handle selection of a specific zone
-   * 
-   * @param zoneId - The ID of the selected zone
-   */
-  const handleZoneSelect = (zoneId: string) => {
-    onFilterChange(`zone:${zoneId}` as PostFilter);
+    // Otherwise, keep the current topic filter if appropriate for the tab
   };
 
   /**
@@ -87,38 +74,19 @@ export default function FilterBar({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full">
       {/* Main filter tabs */}
       <Tabs
         defaultValue="all"
         value={selectedTab}
         onValueChange={handleTabChange}
+        className="w-full"
       >
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="all">All Posts</TabsTrigger>
-          <TabsTrigger value="zones">Zones</TabsTrigger>
-          <TabsTrigger value="topics">Topics</TabsTrigger>
+        <TabsList className="w-full md:w-auto justify-start">
+          <TabsTrigger value="all" className="flex-1 md:flex-none">All Posts</TabsTrigger>
+          <TabsTrigger value="topics" className="flex-1 md:flex-none">Topics</TabsTrigger>
         </TabsList>
       </Tabs>
-
-      {/* Zone filter buttons */}
-      {selectedTab === "zones" && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {zones.map((zone) => (
-            <button
-              key={zone.id}
-              className={`px-3 py-1 text-sm rounded-full ${
-                currentFilter === `zone:${zone.id}`
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-              onClick={() => handleZoneSelect(zone.id)}
-            >
-              {zone.name}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Topic filter buttons */}
       {selectedTab === "topics" && (

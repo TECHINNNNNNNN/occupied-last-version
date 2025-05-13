@@ -143,16 +143,16 @@ export default function PostCard({
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg border shadow-sm">
+    <div className="bg-white p-3 sm:p-4 rounded-lg border shadow-sm">
       {/* Post header with user info and metadata */}
-      <div className="flex items-start gap-3">
-        <Avatar>
+      <div className="flex items-start gap-2 sm:gap-3">
+        <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
           <AvatarImage src={post.user.avatar} alt={post.user.name} />
           <AvatarFallback>{post.user.name.charAt(0)}</AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between sm:gap-2">
             <div>
               <h3 className="font-medium text-sm">{post.user.name}</h3>
               <p className="text-gray-500 text-xs">
@@ -162,7 +162,7 @@ export default function PostCard({
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 mt-1 sm:mt-0">
               {/* Delete button (only shown to post owner) */}
               {onDelete && (
                 <AlertDialog>
@@ -170,20 +170,20 @@ export default function PostCard({
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 text-gray-500 hover:text-red-600"
+                      className="h-7 w-7 sm:h-8 sm:w-8 text-gray-500 hover:text-red-600"
                       disabled={isDeleting}
                     >
                       <Trash2 size={16} />
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Post</AlertDialogTitle>
                       <AlertDialogDescription>
                         Are you sure you want to delete this post? This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction 
                         onClick={handleDelete}
@@ -201,16 +201,25 @@ export default function PostCard({
 
               {/* Show zone tag if post has a zone */}
               {post.zone && (
-                <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
+                <div className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs hidden sm:block">
                   {post.zone.name}
                 </div>
               )}
             </div>
           </div>
 
+          {/* Zone tag for mobile (if post has a zone) */}
+          {post.zone && (
+            <div className="mt-1 sm:hidden">
+              <span className="inline-block px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
+                {post.zone.name}
+              </span>
+            </div>
+          )}
+
           {/* Post content */}
           <div className="mt-2">
-            <p className="whitespace-pre-wrap break-words">{post.content}</p>
+            <p className="whitespace-pre-wrap break-words text-sm sm:text-base">{post.content}</p>
 
             {/* Image (if any) */}
             {post.imageUrl && (
@@ -218,7 +227,7 @@ export default function PostCard({
                 <ImageWithFallback
                   src={post.imageUrl}
                   alt="Post attachment"
-                  className="rounded-md max-h-96 w-auto object-contain"
+                  className="rounded-md max-h-64 sm:max-h-96 w-auto object-contain"
                 />
               </div>
             )}

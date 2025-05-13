@@ -38,7 +38,6 @@ export default function CommunicationFeed() {
   // Get communication data and functions from our custom hook
   const { 
     posts, 
-    zones,
     topics,
     loading, 
     error, 
@@ -52,25 +51,25 @@ export default function CommunicationFeed() {
   } = useCommunication();
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full mx-auto md:max-w-2xl">
       {/* Post creation form */}
       <CreatePost />
 
-
       {/* Filtering options and refresh button */}
-      <div className="my-6 flex justify-between items-center">
-        <FilterBar 
-          zones={zones}
-          topics={topics}
-          currentFilter={filter} 
-          onFilterChange={setFilter} 
-        />
+      <div className="my-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="w-full sm:w-auto">
+          <FilterBar 
+            topics={topics}
+            currentFilter={filter} 
+            onFilterChange={setFilter} 
+          />
+        </div>
         <Button
           variant="outline"
           size="sm"
           onClick={refreshPosts}
           disabled={loading}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 self-end sm:self-auto"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh

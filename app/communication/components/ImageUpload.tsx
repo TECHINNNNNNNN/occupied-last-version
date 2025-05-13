@@ -137,15 +137,12 @@ export default function ImageUpload({ onImageSelected }: ImageUploadProps) {
         variant="outline"
         onClick={handleButtonClick}
         disabled={isUploading}
-        className="flex items-center gap-1"
+        className="flex items-center justify-center h-full"
       >
         {isUploading ? (
-          <span>Uploading...</span>
+          <span>📤</span>
         ) : (
-          <>
-            <span>📷</span>
-            <span>Image</span>
-          </>
+          <span>📷</span>
         )}
       </Button>
     </div>
