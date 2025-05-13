@@ -56,14 +56,25 @@ export default function CommunicationFeed() {
       {/* Post creation form */}
       <CreatePost />
 
-      {/* Filtering options */}
-      <div className="my-6">
+
+      {/* Filtering options and refresh button */}
+      <div className="my-6 flex justify-between items-center">
         <FilterBar 
           zones={zones}
           topics={topics}
           currentFilter={filter} 
           onFilterChange={setFilter} 
         />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={refreshPosts}
+          disabled={loading}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Error state */}
