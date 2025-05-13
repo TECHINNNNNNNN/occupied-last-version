@@ -293,7 +293,7 @@ export default function Dashboard() {
       */}
       <div className="max-w-7xl mx-auto flex flex-col w-full h-full gap-4 pb-6">
         {/* SECTION: Personalized Welcome Header */}
-        <div className="w-full h-20 mb-6">
+        <div className="w-full mb-6">
           <h1 className="text-3xl font-bold">{getTimeBasedGreeting()}, {userName}!</h1>
           <p className="text-lg text-gray-600">Monitor, book, and manage your library spaces with ease.</p>
         </div>
