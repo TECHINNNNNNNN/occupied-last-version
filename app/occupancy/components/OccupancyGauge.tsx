@@ -11,19 +11,16 @@
  * KEY DEPENDENCIES: 
  *   - react-gauge-component for gauge visualization
  *   - Color coding for different occupancy levels
+ *   - OccupancyContext for type definitions
  */
 
 "use client";
 
 import { GaugeComponent } from "react-gauge-component";
+import { OccupancyData } from "@/contexts/OccupancyContext";
 
 interface OccupancyGaugeProps {
-  data: {
-    percentage: number;
-    occupied: number;
-    capacity: number;
-    status: string;
-  } | null;
+  data: OccupancyData | null;
 }
 
 export default function OccupancyGauge({ data }: OccupancyGaugeProps) {

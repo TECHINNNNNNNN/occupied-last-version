@@ -3,7 +3,7 @@
 // PURPOSE: Main application layout, wraps all pages with global providers and shared UI.
 // CONTEXT: Used as the root layout for all routes in the Next.js App Router.
 // DATA FLOW: Receives children (page content), injects providers and shared components.
-// KEY DEPENDENCIES: AuthProvider, Toaster, BackButton, usePathname (Next.js)
+// KEY DEPENDENCIES: AuthProvider, OccupancyProvider, Toaster, BackButton, usePathname (Next.js)
 //
 // This layout now conditionally renders a BackButton at the top of all pages except the dashboard.
 // ----------------------------------------------------------------------------
@@ -13,6 +13,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Inter } from 'next/font/google'
 import { AuthProvider } from "@/contexts/AuthContext";
+import { OccupancyProvider } from "@/contexts/OccupancyContext";
 import { Toaster } from "@/components/ui/sonner"
 // Import BackButton and usePathname for navigation logic
 import { BackButtonWrapper } from "@/components/BackButtonWrapper";
@@ -44,9 +45,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} ${inter.className}`}>
         <AuthProvider>
-          {/* Render BackButtonWrapper at the top; it handles route detection client-side */}
-          <BackButtonWrapper />
-          {children}
+          {/* Wrap with OccupancyProvider to provide consistent occupancy data */}
+          <OccupancyProvider>
+            {/* Render BackButtonWrapper at the top; it handles route detection client-side */}
+            <BackButtonWrapper />
+            {children}
+          </OccupancyProvider>
         </AuthProvider>
         <Toaster />
       </body>

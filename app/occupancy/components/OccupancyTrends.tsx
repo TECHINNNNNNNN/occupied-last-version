@@ -13,6 +13,7 @@
  * KEY DEPENDENCIES:
  *   - recharts for data visualization
  *   - Custom tooltip component for better data presentation
+ *   - OccupancyContext for type definitions
  */
 
 "use client";
@@ -28,25 +29,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-
-/**
- * Historical data point structure provided by parent component
- */
-interface HistoricalDataPoint {
-  time: string;
-  hour: number;
-  formattedTime: string;
-  overall: number;
-  totalOccupancy: number;
-  totalCapacity: number;
-  zones: Array<{
-    id: string;
-    name: string;
-    count: number;
-    capacity: number;
-    percentage: number;
-  }>;
-}
+import { HistoricalDataPoint } from "@/contexts/OccupancyContext";
 
 /**
  * Simplified data structure for chart rendering

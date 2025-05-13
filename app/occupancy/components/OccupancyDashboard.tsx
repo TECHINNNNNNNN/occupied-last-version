@@ -8,20 +8,17 @@
  * library occupancy information
  * 
  * DATA FLOW: 
- *   - Fetches mock data from utility functions (will be replaced with real API calls)
- *   - Updates data on a 1-minute polling interval
+ *   - Gets data from the shared OccupancyContext
  *   - Distributes data to child visualization components
  * 
  * KEY DEPENDENCIES: 
- *   - React state for data management
- *   - Mock data generation utilities
+ *   - OccupancyContext for shared data management
  *   - Card components from shadcn/ui
  *   - Child visualization components
  */
 
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -29,75 +26,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  getOverallOccupancy,
-  generateHistoricalData,
-} from "@/utils/mockOccupancyData";
+import { useOccupancy } from "@/contexts/OccupancyContext";
 import OccupancyGauge from "./OccupancyGauge";
 import OccupancyTrends from "./OccupancyTrends";
 
-// Define types for the state variables
-interface OverallData {
-  occupied: number;
-  capacity: number;
-  percentage: number;
-  status: string;
-}
-
-interface HistoricalDataPoint {
-  time: string;
-  hour: number;
-  formattedTime: string;
-  overall: number;
-  totalOccupancy: number;
-  totalCapacity: number;
-}
-
 export default function OccupancyDashboard() {
   /**
-   * STATE MANAGEMENT
+   * CONTEXT DATA
    * 
-   * overallData: Aggregated library-wide occupancy metrics
-   * historicalData: Time-series data for trend visualization
-   * isLoading: Tracks data loading state for UI feedback
+   * Use the shared OccupancyContext to get consistent data across the app
    */
-  const [overallData, setOverallData] = useState<OverallData | null>(null);
-  const [historicalData, setHistoricalData] = useState<HistoricalDataPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  /**
-   * DATA FETCHING EFFECT
-   * 
-   * Fetches initial data and sets up polling for real-time updates
-   * In a production app, this would use authenticated API calls
-   * and potentially WebSockets for real-time data
-   */
-  useEffect(() => {
-    // Function to fetch occupancy data
-    const fetchData = () => {
-      try {
-        // In a production app, these would be API calls to backend services
-        const overall = getOverallOccupancy();
-        const historical = generateHistoricalData(12); // Last 12 hours
-
-        setOverallData(overall);
-        setHistoricalData(historical);
-      } catch (error) {
-        console.error("Error fetching occupancy data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    // Initial data fetch
-    fetchData();
-
-    // Set up polling for real-time updates (every minute)
-    const intervalId = setInterval(fetchData, 60000);
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
+  const { currentOccupancy, historicalData, isLoading, lastUpdated } = useOccupancy();
 
   /**
    * LOADING STATE RENDERING
@@ -120,6 +59,13 @@ export default function OccupancyDashboard() {
    */
   return (
     <div className="space-y-6">
+      {/* Last Updated Timestamp */}
+      {lastUpdated && (
+        <div className="text-sm text-gray-500 text-right">
+          Last updated: {lastUpdated.toLocaleTimeString()}
+        </div>
+      )}
+      
       {/* Overall Occupancy Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Current Overall Occupancy */}
@@ -129,7 +75,7 @@ export default function OccupancyDashboard() {
             <CardDescription>Overall library space utilization</CardDescription>
           </CardHeader>
           <CardContent>
-            <OccupancyGauge data={overallData} />
+            <OccupancyGauge data={currentOccupancy} />
           </CardContent>
         </Card>
 

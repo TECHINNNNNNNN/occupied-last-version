@@ -11,6 +11,9 @@
  *   - Overall library occupancy statistics
  * 
  * KEY DEPENDENCIES: None - uses native JavaScript APIs for data generation
+ * 
+ * UPDATE: Modified to provide deterministic results based on timestamps
+ * to ensure consistency across the application
  */
 
 // import { faker } from "@faker-js/faker";
@@ -28,6 +31,42 @@ export const LIBRARY_ZONES = [
 ];
 
 /**
+ * Helper function to generate a deterministic "random" value based on time parameters
+ * 
+ * PURPOSE: Ensures consistent results for the same time periods while still
+ * providing variation throughout the day
+ * 
+ * INPUTS:
+ *   - hour: Hour of the day (0-23)
+ *   - minute: Minute of the hour (0-59)
+ *   - dayOffset: Optional day offset (0 for today, 1 for yesterday, etc.)
+ *   - seed: Optional additional seed value to create variation for different zones
+ * 
+ * RETURNS: Deterministic value between 0 and 1
+ * 
+ * @param hour Hour of the day (0-23)
+ * @param minute Minute of the hour (0-59)
+ * @param dayOffset Days from present (0 for today, 1 for yesterday, etc.)
+ * @param seed Additional seed value (e.g., for zone variations)
+ * @returns A pseudo-random but deterministic value between 0 and 1
+ */
+function deterministicRandom(hour: number, minute: number, dayOffset = 0, seed = 0): number {
+  // Create a deterministic seed based on time parameters
+  // This ensures the same values are returned for the same inputs
+  const daySeed = dayOffset * 24; // Different value for each day
+  const timeSeed = hour + (minute / 60); // Combined hour and minute (0-24 range)
+  const totalSeed = (daySeed + timeSeed + seed) * 10000;
+  
+  // Use a simple but deterministic formula
+  // Math.sin produces values between -1 and 1
+  // We transform to 0-1 range and take 8 decimal digits for sufficient variation
+  const value = (Math.sin(totalSeed) + 1) / 2;
+  
+  // Limit to 8 decimal places to reduce floating point issues
+  return parseFloat(value.toFixed(8));
+}
+
+/**
  * Generates realistic current occupancy data for all library zones
  * 
  * PURPOSE: Creates time-sensitive mock data that follows typical library usage patterns
@@ -40,11 +79,13 @@ export const LIBRARY_ZONES = [
  * ASSUMPTIONS: Library operating hours are 8am-10pm
  * 
  * IMPLEMENTATION: Uses time-based patterns, day of week factors, and zone-specific
- * behavior patterns to generate realistic occupancy numbers
+ * behavior patterns to generate realistic occupancy numbers in a deterministic way
  */
 export function generateCurrentOccupancy() {
   const now = new Date();
   const hour = now.getHours();
+  const minute = now.getMinutes();
+  const dayOfWeek = now.getDay();
 
   // Library is closed outside of operating hours (8am-10pm)
   if (hour < 8 || hour > 22) {
@@ -57,7 +98,7 @@ export function generateCurrentOccupancy() {
   }
 
   // Create realistic occupancy based on time of day
-  return LIBRARY_ZONES.map((zone) => {
+  return LIBRARY_ZONES.map((zone, index) => {
     // Time-based patterns
     let baseOccupancyFactor;
 
@@ -67,7 +108,7 @@ export function generateCurrentOccupancy() {
     }
     // Afternoon: peak hours
     else if (hour < 18) {
-      baseOccupancyFactor = 0.7 + Math.random() * 0.2;
+      baseOccupancyFactor = 0.7;
     }
     // Evening: gradually decreases
     else {
@@ -75,18 +116,17 @@ export function generateCurrentOccupancy() {
     }
 
     // Weekend adjustment
-    const dayOfWeek = now.getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const weekendFactor = isWeekend ? 0.7 : 1;
 
-    // Add natural variation per zone
+    // Add natural variation per zone - now deterministic based on zone index
     let zoneFactor = 1;
     switch (zone.id) {
       case "zone1":
-        zoneFactor = 0.9 + Math.random() * 0.2; // Main reading always busy
+        zoneFactor = 0.9 + deterministicRandom(hour, minute, 0, 0.1); // Main reading always busy
         break;
       case "zone2":
-        zoneFactor = 0.7 + Math.random() * 0.3; // Quiet study variable
+        zoneFactor = 0.7 + deterministicRandom(hour, minute, 0, 0.2); // Quiet study variable
         break;
       case "zone3":
         zoneFactor = hour > 15 ? 0.9 : 0.5; // Group rooms busier in evenings
@@ -95,19 +135,19 @@ export function generateCurrentOccupancy() {
         zoneFactor = hour < 14 ? 0.9 : 0.6; // Computer lab busier in mornings
         break;
       case "zone5":
-        zoneFactor = 0.5 + Math.random() * 0.4; // Research commons variable
+        zoneFactor = 0.5 + deterministicRandom(hour, minute, 0, 0.3); // Research commons variable
         break;
     }
 
-    // Calculate final occupancy with some randomness
+    // Calculate final occupancy with deterministic variation
     const baseOccupancy = Math.floor(
       zone.capacity * baseOccupancyFactor * weekendFactor * zoneFactor
     );
 
-    // Add natural variation
-    const randomVariation = Math.floor(
-      zone.capacity * 0.1 * (Math.random() - 0.5)
-    );
+    // Add deterministic variation
+    const variationFactor = deterministicRandom(hour, minute, 0, index) - 0.5; // -0.5 to 0.5
+    const randomVariation = Math.floor(zone.capacity * 0.1 * variationFactor);
+    
     const current = Math.max(
       0,
       Math.min(zone.capacity, baseOccupancy + randomVariation)
@@ -148,7 +188,7 @@ export function generateCurrentOccupancy() {
  *   - zones: Detailed occupancy data for each zone
  * 
  * IMPLEMENTATION: Creates a series of timestamps working backward from current time,
- * generating plausible occupancy data for each time point.
+ * generating plausible occupancy data for each time point in a deterministic way.
  */
 export function generateHistoricalData(hours = 12) {
   const data = [];
@@ -158,6 +198,9 @@ export function generateHistoricalData(hours = 12) {
   for (let i = 0; i < hours; i++) {
     const time = new Date(now);
     time.setHours(now.getHours() - i);
+    time.setMinutes(0); // Set to the start of the hour for consistency
+    time.setSeconds(0);
+    time.setMilliseconds(0);
 
     // Skip hours when library is closed
     const hour = time.getHours();
@@ -166,15 +209,16 @@ export function generateHistoricalData(hours = 12) {
     // Calculate total occupancy for this hour
     let totalOccupancy = 0;
     let totalCapacity = 0;
+    const dayOffset = i / 24; // Fractional day offset for deterministic random function
 
-    const zoneData = LIBRARY_ZONES.map((zone) => {
-      // Similar logic to current occupancy but with more randomness for historical data
+    const zoneData = LIBRARY_ZONES.map((zone, index) => {
+      // Similar logic to current occupancy but with deterministic variations
       let baseOccupancyFactor;
 
       if (hour < 12) {
         baseOccupancyFactor = 0.3 + (hour - 8) * 0.1;
       } else if (hour < 18) {
-        baseOccupancyFactor = 0.7 + Math.random() * 0.2;
+        baseOccupancyFactor = 0.7;
       } else {
         baseOccupancyFactor = 0.8 - (hour - 18) * 0.1;
       }
@@ -183,11 +227,11 @@ export function generateHistoricalData(hours = 12) {
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       const weekendFactor = isWeekend ? 0.7 : 1;
 
-      // More randomness for historical data
-      const randomFactor = 0.7 + Math.random() * 0.6;
+      // Deterministic factor instead of random
+      const deterministicFactor = 0.7 + deterministicRandom(hour, 0, dayOffset, index) * 0.3;
 
       const count = Math.floor(
-        zone.capacity * baseOccupancyFactor * weekendFactor * randomFactor
+        zone.capacity * baseOccupancyFactor * weekendFactor * deterministicFactor
       );
       const capped = Math.max(0, Math.min(zone.capacity, count));
 
