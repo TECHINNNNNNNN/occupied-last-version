@@ -21,7 +21,7 @@ interface OccupancyCardProps {
 
 const OccupancyCard = ({ isLoading, currentOccupancy }: OccupancyCardProps) => {
   return (
-    <div className="col-span-4 bg-white rounded-lg shadow p-4 flex flex-col">
+    <div className="col-span-2  bg-white/65 backdrop-blur-sm rounded-3xl  p-4 flex flex-col">
       <h2 className="text-lg font-semibold mb-1">Occupancy</h2>
       
       {/* Simplified Occupancy Display */}
@@ -34,16 +34,16 @@ const OccupancyCard = ({ isLoading, currentOccupancy }: OccupancyCardProps) => {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border-4 mb-1" 
                  style={{ 
                    borderColor: getStatusColor(currentOccupancy.percentage),
-                   background: `linear-gradient(to right, ${getStatusColor(currentOccupancy.percentage)}22, ${getStatusColor(currentOccupancy.percentage)}44)`
+                  
                  }}>
-              <span className="text-xl font-bold">
+              <span className="text-xl  font-bold">
                 {Math.round(currentOccupancy.percentage * 100)}%
               </span>
             </div>
             
             {/* Status Badge */}
             <div className="mb-1">
-              <span className="text-sm font-medium px-3 py-0.5 rounded-full"
+              <span className="text-xs font-mono font-medium px-3 py-0.5 rounded-full"
                     style={{ 
                       backgroundColor: getStatusColor(currentOccupancy.percentage),
                       color: currentOccupancy.percentage > 0.5 ? 'white' : 'black'
@@ -60,12 +60,7 @@ const OccupancyCard = ({ isLoading, currentOccupancy }: OccupancyCardProps) => {
         )}
       </div>
       
-      {/* Link to detailed occupancy view */}
-      <div className="mt-auto text-center">
-        <Link href="/occupancy" className="text-sm text-indigo-600 hover:underline">
-          View detailed occupancy data
-        </Link>
-      </div>
+      
     </div>
   );
 };

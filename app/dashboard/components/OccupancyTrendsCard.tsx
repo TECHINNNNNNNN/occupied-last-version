@@ -26,8 +26,8 @@ interface OccupancyTrendsCardProps {
 
 const OccupancyTrendsCard = ({ isLoading, chartData }: OccupancyTrendsCardProps) => {
   return (
-    <div className="col-span-7 bg-white rounded-lg shadow p-4 flex flex-col h-80 mt-2">
-      <h2 className="text-lg font-semibold mb-1">Occupancy Trends</h2>
+    <div className="col-span-5 col-start-4 bg-white/65 backdrop-blur-sm p-2  rounded-3xl  flex flex-col min-h-[300px]">
+      <h2 className="text-lg font-semibold mb-1 text-gray-800 p-1">Occupancy Trends</h2>
       
       {isLoading || chartData.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
@@ -66,7 +66,7 @@ const OccupancyTrendsCard = ({ isLoading, chartData }: OccupancyTrendsCardProps)
                 type="monotone"
                 dataKey="occupancy"
                 name="Occupancy"
-                stroke="#3b82f6"
+                stroke="#EAD637"
                 strokeWidth={2}
                 dot={true}
                 activeDot={{ r: 5 }}
@@ -76,11 +76,7 @@ const OccupancyTrendsCard = ({ isLoading, chartData }: OccupancyTrendsCardProps)
         </div>
       )}
       
-      <div className="mt-auto pt-1 text-center">
-        <Link href="/occupancy" className="text-sm text-indigo-600 hover:underline">
-          View detailed trend analysis
-        </Link>
-      </div>
+      
     </div>
   );
 };

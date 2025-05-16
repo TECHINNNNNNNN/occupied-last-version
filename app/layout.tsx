@@ -17,6 +17,24 @@ import { OccupancyProvider } from "@/contexts/OccupancyContext";
 import { Toaster } from "@/components/ui/sonner"
 // Import BackButton and usePathname for navigation logic
 import { BackButtonWrapper } from "@/components/BackButtonWrapper";
+import localFont from 'next/font/local';
+
+const ancizarSerif = localFont({
+  src: [
+    {
+      path: '../public/fonts/ancizar-serif/AncizarSerif-VariableFont_wght.ttf',
+      style: 'normal',
+      weight: '100 900', // Supports all weights in the variable font
+    },
+    {
+      path: '../public/fonts/ancizar-serif/AncizarSerif-Italic-VariableFont_wght.ttf',
+      style: 'italic',
+      weight: '100 900',
+    },
+  ],
+  variable: '--font-ancizar-serif',
+  display: 'swap',
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,7 +61,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.className}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${inter.className} ${ancizarSerif.variable}`}>
         <AuthProvider>
           {/* Wrap with OccupancyProvider to provide consistent occupancy data */}
           <OccupancyProvider>

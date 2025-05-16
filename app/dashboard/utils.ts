@@ -65,10 +65,7 @@ export const formatTimeAgo = (date: Date): string => {
  * @returns Color hex code
  */
 export const getStatusColor = (percentage: number): string => {
-  if (percentage < 0.3) return "#22c55e"; // green
-  if (percentage < 0.6) return "#f59e0b"; // amber
-  if (percentage < 0.85) return "#f97316"; // orange
-  return "#ef4444"; // red
+  return "#EAD637"; // red
 };
 
 /**

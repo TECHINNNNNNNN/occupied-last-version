@@ -13,11 +13,17 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ['images.unsplash.com'],
+    domains: ['images.unsplash.com', 'videos.openai.com'],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'www.google.co.th',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'videos.openai.com',
         port: '',
         pathname: '/**',
       },

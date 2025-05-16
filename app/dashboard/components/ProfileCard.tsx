@@ -19,7 +19,7 @@ const ProfileCard = ({ userName, userRole, avatarUrl, initials }: ProfileCardPro
   return (
     <Link 
       href="/profile" 
-      className="col-span-3 bg-white rounded-lg shadow overflow-hidden h-full relative group"
+      className="col-span-2  bg-white rounded-3xl shadow overflow-hidden h-full relative group"
     >
       {/* Background Image with Gradient Overlay */}
       <div className="absolute inset-0 w-full h-full">
@@ -35,21 +35,23 @@ const ProfileCard = ({ userName, userRole, avatarUrl, initials }: ProfileCardPro
           </div>
         )}
         {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-300/15  to-transparent"></div>
       </div>
       
       {/* Content overlay */}
-      <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
-        <div className="mb-1">
-          <h2 className="text-xl font-semibold">{userName}</h2>
-          <p className="text-sm text-gray-200">{userRole}</p>
+        <div className="mb-1 absolute bottom-0 flex justify-between w-full items-center  px-2">
+          <p className="text-sm text-gray-200 p-2">{userRole}</p>
+          <h2 className="text-2xl font-bold font-mono p-2 px-4  text-gray-200 inline-block">{userName}</h2>
+          
         </div>
         
         {/* Hover effect for clickable indication */}
-        <p className="text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity mt-1">
-          Click to view profile
-        </p>
-      </div>
+        {/* <div className="flex flex-col justify-end items-end">
+          <p className="text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex-end">
+            Click to view profile
+          </p>
+        </div> */}
+      
     </Link>
   );
 };

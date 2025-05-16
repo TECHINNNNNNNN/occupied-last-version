@@ -22,8 +22,8 @@ const CommunicationsCard = ({
   communicationsLoading 
 }: CommunicationsCardProps) => {
   return (
-    <div className="sm:col-span-5 col-span-7 bg-white rounded-lg shadow p-4 flex flex-col h-80 mt-2">
-      <h2 className="text-lg font-semibold mb-1">Recent Communications</h2>
+    <div className="sm:col-span-5 lg:col-span-4 row-span-2 col-span-7 backdrop-blur-2xl  bg-white/65 rounded-3xl  p-4 flex flex-col">
+      <h2 className="text-lg font-semibold mb-3">Recent Communications</h2>
       
       {/* Communications feed */}
       <div className="flex-1 overflow-y-auto space-y-2">
@@ -87,7 +87,7 @@ const CommunicationsCard = ({
       
       {/* Link to communications page */}
       <div className="mt-auto pt-1 text-center border-t border-gray-100">
-        <Link href="/communication" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/communication" className="text-sm text-gray-800 font-semibold hover:underline">
           View all community posts
         </Link>
       </div>

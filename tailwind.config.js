@@ -11,6 +11,9 @@ module.exports = {
   ],
   theme: {
   	extend: {
+  		fontFamily: {
+  			ancizar: ['var(--font-ancizar-serif)'],
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

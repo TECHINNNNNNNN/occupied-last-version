@@ -16,13 +16,17 @@ import { getPosts } from '@/app/communication/services/communicationService'
 import { Post } from '@/app/communication/types/communicationTypes'
 import { ChartDataPoint, Reservation } from './types'
 import { getInitials } from './utils'
-
+import Image from 'next/image'
 // Component imports
 import ProfileCard from './components/ProfileCard'
 import OccupancyCard from './components/OccupancyCard'
 import RoomManagementCard from './components/RoomManagementCard'
 import OccupancyTrendsCard from './components/OccupancyTrendsCard'
 import CommunicationsCard from './components/CommunicationsCard'
+import { NavBar } from './components/Navbar'
+import { FileText, Home } from 'lucide-react'
+import { User } from 'lucide-react'
+import { Briefcase } from 'lucide-react'
 
 // SECTION: Dashboard Container
 export default function Dashboard() {
@@ -66,6 +70,15 @@ export default function Dashboard() {
       return 'Welcome back';
     }
   };
+
+ 
+
+  const navItems = [
+    { name: 'Home', url: '#', icon: Home },
+    { name: 'Statistics', url: '#', icon: User },
+    { name: 'Reservations', url: '#', icon: Briefcase },
+    { name: 'Communications', url: '#', icon: FileText }
+  ] 
   
   // EFFECT: Fetch user profile data
   useEffect(() => {
@@ -266,7 +279,7 @@ export default function Dashboard() {
         setCommunicationsLoading(true);
         const posts = await getPosts();
         // Get most recent 3 posts for the dashboard
-        setRecentCommunications(posts.slice(0, 3));
+        setRecentCommunications(posts.slice(0, 4));
       } catch (error) {
         console.error("Error fetching communications:", error);
       } finally {
@@ -285,16 +298,22 @@ export default function Dashboard() {
 
   return (
     // Main container with reduced padding for better space usage
-    <div className="h-screen w-screen flex flex-col bg-gray-50 p-4 overflow-auto">
+    <div className="min-h-screen w-screen flex flex-col bg-gradient-to-br from-slate-300 via-amber-50 to-amber-100 opacity-90 p-2 overflow-auto">
       {/*
         Content container with improved proportions
         - Using h-full to respect parent constraints
         - Added pb-6 to ensure bottom padding when scrolling
       */}
-      <div className="max-w-7xl mx-auto flex flex-col w-full h-full gap-4 pb-6">
+
+      <div className="px-3 mx-auto flex flex-col w-full h-full">
+        <div className='flex justify-between py-2 px-4'>
+          <Image src="/images/logolibrary.webp" alt="logo" width={20} height={20} className='w-10 h-10' />
+          <NavBar items={navItems} />
+        </div>
+
         {/* SECTION: Personalized Welcome Header */}
-        <div className="w-full mb-6">
-          <h1 className="text-3xl font-bold">{getTimeBasedGreeting()}, {userName}!</h1>
+        <div className="w-full flex-1 p-4">
+          <h1 className="text-5xl font-bold font-ancizar italic">{getTimeBasedGreeting()}, {userName}!</h1>
           <p className="text-lg text-gray-600">Monitor, book, and manage your library spaces with ease.</p>
         </div>
 
@@ -304,7 +323,7 @@ export default function Dashboard() {
           - Using grid-rows-[auto] to adapt to content
           - 12-column layout with consistent gap
         */}
-        <div className="grid sm:grid-cols-12 grid-cols-7 gap-4">
+        <div className="grid flex-1 sm:grid-cols-12 grid-cols-7  gap-4">
           {/* Profile Card */}
           <ProfileCard 
             userName={userName}
@@ -327,19 +346,23 @@ export default function Dashboard() {
             totalRooms={totalRooms}
           />
 
-          {/* Occupancy Trends Card */}
-          <OccupancyTrendsCard 
-            isLoading={isLoading}
-            chartData={chartData}
-          />
-          
           {/* Recent Communications Card */}
           <CommunicationsCard 
             recentCommunications={recentCommunications}
             communicationsLoading={communicationsLoading}
           />
+
+          {/* Occupancy Trends Card */}
+          <OccupancyTrendsCard 
+            isLoading={isLoading}
+            chartData={chartData}
+          />
+
+          
+          
         </div>
       </div>
+      
     </div>
   )
 } 

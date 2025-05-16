@@ -27,13 +27,13 @@ const RoomManagementCard = ({
   totalRooms,
 }: RoomManagementCardProps) => {
   return (
-    <div className="sm:col-span-5 col-span-7 bg-white rounded-lg shadow p-4 flex flex-col">
+    <div className="sm:col-span-5 lg:col-span-4 col-span-7 bg-white/75 rounded-3xl  p-4 flex flex-col ">
       <h2 className="text-lg font-semibold mb-1">Room Management</h2>
       
       {/* Quick Actions */}
       <div className="flex space-x-2 mb-2">
         <Link href="/reservations" className="flex-1">
-          <Button variant="default" size="sm" className="w-full bg-indigo-600 hover:bg-indigo-700">
+          <Button variant="default" size="sm" className="w-full bg-gray-900">
             Book Room
           </Button>
         </Link>
@@ -65,7 +65,7 @@ const RoomManagementCard = ({
                 key={reservation.id} 
                 className="flex items-start py-1 border-b border-gray-100 last:border-0 text-sm"
               >
-                <div className="flex-shrink-0 text-indigo-500 mt-0.5 mr-2">
+                <div className="flex-shrink-0 text-gray-100 mt-0.5 mr-2">
                   {index === 0 ? <Calendar size={14} /> : <Clock size={14} />}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -82,7 +82,7 @@ const RoomManagementCard = ({
             <div className="text-center py-4">
               <p className="text-sm text-gray-400 mb-2">No upcoming reservations</p>
               <Link href="/reservations">
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                <Button size="sm" className="bg-gray-900">
                   Book a Room
                 </Button>
               </Link>
@@ -91,16 +91,7 @@ const RoomManagementCard = ({
         </div>
       </div>
       
-      {/* Current Status */}
-      <div className="mt-auto">
-        <div className="flex items-center text-sm text-gray-600">
-          <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-          <span>{availableRooms} of {totalRooms} rooms available now</span>
-        </div>
-        <Link href="/reservations" className="text-xs text-indigo-600 hover:underline mt-1 inline-block">
-          Manage your reservations
-        </Link>
-      </div>
+      
     </div>
   );
 };
