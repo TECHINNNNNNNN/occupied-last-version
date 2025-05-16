@@ -44,7 +44,7 @@ export function BackButton() {
       variant="ghost"
       size="icon"
       aria-label="Back to dashboard"
-      className="mt-4 ml-2"
+      className="mt-4 ml-2 bg-transparent hover:bg-transparent/10 backdrop-blur-none"
     >
       {/* Left-arrow SVG icon (user-friendly, accessible) */}
       <svg

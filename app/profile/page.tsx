@@ -143,7 +143,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-amber-50 to-amber-100  p-8">
       <h1 className="text-3xl font-bold mb-8 text-center">Your Profile</h1>
       <Card className="max-w-xl mx-auto p-6 shadow-lg">
         <div className="flex flex-col items-center mb-6">

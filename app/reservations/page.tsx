@@ -67,8 +67,8 @@ export default function ReservationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbfbfa] p-4 md:p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-amber-50 to-amber-100 p-4 md:p-6">
+      <div className="max-w-6xl pt-3 mx-auto">
         <h1 className="text-xl md:text-2xl font-medium text-gray-800 mb-4 md:mb-6">Library Room Reservation</h1>
         
         {/* Notion-style grid layout */}

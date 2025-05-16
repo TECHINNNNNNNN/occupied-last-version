@@ -22,9 +22,11 @@ import CommunicationFeed from "./components/CommunicationFeed";
 
 export default function CommunicationPage() {
   return (
-    <div className="w-full px-4 py-6 sm:py-8 md:container md:mx-auto">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-center sm:text-left">Library Community</h1>
-      <CommunicationFeed />
+    <div className="min-h-screen bg-gradient-to-br from-slate-300 via-amber-50 to-amber-100 p-8">
+      <div className="w-full px-4 py-6 sm:py-8 md:container md:mx-auto">
+        <h1 className="text-2xl md:text-4xl  mb-6 text-center font-ancizar font-semibold">Library Community</h1>
+        <CommunicationFeed />
+      </div>
     </div>
   );
 } 
