@@ -27,6 +27,7 @@ import { NavBar } from './components/Navbar'
 import { FileText, Home } from 'lucide-react'
 import { User } from 'lucide-react'
 import { Briefcase } from 'lucide-react'
+import Announcement from './components/Announcement'
 
 // SECTION: Dashboard Container
 export default function Dashboard() {
@@ -351,6 +352,9 @@ export default function Dashboard() {
             recentCommunications={recentCommunications}
             communicationsLoading={communicationsLoading}
           />
+
+          {/* Announcement Card */}
+          <Announcement />
 
           {/* Occupancy Trends Card */}
           <OccupancyTrendsCard 
