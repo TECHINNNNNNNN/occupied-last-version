@@ -1,10 +1,22 @@
 import React, { useEffect, useState } from 'react'
 import { getAnnouncements } from '../service/announcementService';
 import { format } from 'date-fns';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const Announcement = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState<boolean[]>([])
+
+  const toggleAnnouncement = (index: number) => {
+    setIsOpen(prev => {
+        const newOpen = [...prev];
+        newOpen[index] = !newOpen[index];
+        return newOpen;
+    })
+  }
+
+
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
@@ -20,9 +32,11 @@ const Announcement = () => {
     fetchAnnouncements();
   },[])
 
+
+
   return (
     <div className='col-span-3 bg-white/75   backdrop-blur-sm p-2  rounded-3xl '>
-        <div className='overflow-y-auto max-h-[310px] pr-2 custom-scrollbar ' >
+        <div className='overflow-y-auto max-h-[270px] pr-2 custom-scrollbar ' >
             <h2 className='text-lg font-bold mb-1 text-gray-800 p-1'>Announcements</h2>
 
             {isLoading ? (
@@ -33,10 +47,18 @@ const Announcement = () => {
                 </div>
             ): announcements.length > 0 ?(
                 <div className='flex flex-col space-y-2 p-2'>
-                    {announcements.map(announcement => (
-                        <div key={announcement.id} className='border-b-2 pb-2 last:border-b-0'>
-                            <h3 className='text-sm font-ancizar font-semibold text-gray-600'>{announcement.title}</h3>
-                            <p className='text-xs text-gray-500'>{announcement.content}</p>
+                    {announcements.map((announcement, index) => (
+                        <div key={announcement.id} className='border-b-2 pb-2 last:border-b-0 space-y-2'>
+                            <div className='flex justify-between items-start'>
+                                <h3 className='text-sm w-2/3 font-ancizar font-bold text-gray-600'>{announcement.title}</h3>
+                                <button className='' onClick={() => toggleAnnouncement(index)}>
+                                    {isOpen[index] ? <ChevronUp className='w-4 h-4 text-gray-600' /> : <ChevronDown className='w-4 h-4 text-gray-600' />}
+                                </button>
+                            </div>
+                           
+                            {isOpen[index] && (
+                                <p className='text-xs text-gray-500'>{announcement.content}</p>
+                            )}
                             <p className='text-xs text-gray-500'>{format(new Date(announcement.published_at), 'MMM d, yyyy')}</p>
                         </div>
                     ))}
