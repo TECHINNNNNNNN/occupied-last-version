@@ -231,7 +231,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-6 pt-6 border-t">
-          <Button onClick={handleSignOut} variant="destructive">
+          <Button onClick={handleSignOut} variant="destructive" className='bg-login-buttonSignIn rounded-2xl hover:bg-login-buttonSignIn/80 transition-all duration-300 text-amber-50'>
             Sign Out
           </Button>
         </div>

@@ -51,7 +51,7 @@ export default function LoginPage() {
         }
         
         if (data?.user) {
-          toast.success('Account created! Please check your email to confirm your account before logging in.')
+          toast.success('Account created! Please log in to continue.')
           setMode('login')
           setEmail('')
           setPassword('')

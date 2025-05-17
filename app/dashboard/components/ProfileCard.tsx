@@ -41,7 +41,7 @@ const ProfileCard = ({ userName, userRole, avatarUrl, initials }: ProfileCardPro
       {/* Content overlay */}
         <div className="mb-1 absolute bottom-0 flex justify-between w-full items-center  px-2">
           <p className="text-sm text-gray-200 p-2">{userRole}</p>
-          <h2 className="text-2xl font-bold font-mono p-2 px-4  text-gray-200 inline-block">{userName}</h2>
+          <h2 className="text-2xl font-bold font-mono p-2 px-4 max-md:text-sm max-sm:hidden  text-gray-200 inline-block">{userName}</h2>
           
         </div>
         

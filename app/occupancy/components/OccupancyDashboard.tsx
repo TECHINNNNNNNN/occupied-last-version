@@ -107,7 +107,7 @@ export default function OccupancyDashboard() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="today" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="mb-4">
+              <TabsList className="mb-4 p-0 max-md: flex max-md:flex-wrap">
                 <TabsTrigger value="today">Today</TabsTrigger>
                 <TabsTrigger value="2day">48-Hour</TabsTrigger>
                 <TabsTrigger value="weekly">Weekly</TabsTrigger>
