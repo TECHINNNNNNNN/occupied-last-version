@@ -3,7 +3,7 @@ import { getAnnouncements } from '../service/announcementService';
 import { format } from 'date-fns';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-const Announcement = () => {
+const Announcement = ({className}: {className?: string}) => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState<boolean[]>([])
@@ -35,7 +35,7 @@ const Announcement = () => {
 
 
   return (
-    <div className='col-span-3 max-md:col-span-12 bg-white/75   backdrop-blur-sm p-2  rounded-3xl '>
+    <div className={`col-span-3 ${className} max-md:col-span-12 bg-white/75   backdrop-blur-sm p-2  rounded-3xl `}>
         <div className='overflow-y-auto max-h-[270px] pr-2 custom-scrollbar ' >
             <h2 className='text-lg font-bold mb-1 text-gray-800 p-1'>Announcements</h2>
 

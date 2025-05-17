@@ -138,7 +138,7 @@ export default function CreatePost() {
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Expires in" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="1">1 hour</SelectItem>
                 <SelectItem value="3">3 hours</SelectItem>
                 <SelectItem value="6">6 hours</SelectItem>

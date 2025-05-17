@@ -28,6 +28,7 @@ import { FileText, Home } from 'lucide-react'
 import { User } from 'lucide-react'
 import { Briefcase } from 'lucide-react'
 import Announcement from './components/Announcement'
+import Link from 'next/link'
 
 // SECTION: Dashboard Container
 export default function Dashboard() {
@@ -76,9 +77,9 @@ export default function Dashboard() {
 
   const navItems = [
     { name: 'Home', url: '#', icon: Home },
-    { name: 'Statistics', url: '#', icon: User },
-    { name: 'Reservations', url: '#', icon: Briefcase },
-    { name: 'Communications', url: '#', icon: FileText }
+    { name: 'Statistics', url: '/occupancy', icon: User },
+    { name: 'Reservations', url: '/reservations', icon: Briefcase },
+    { name: 'Communications', url: '/communication', icon: FileText }
   ] 
   
   // EFFECT: Fetch user profile data
@@ -334,10 +335,12 @@ export default function Dashboard() {
           />
           
           {/* Occupancy Card */}
-          <OccupancyCard 
-            isLoading={isLoading}
-            currentOccupancy={currentOccupancy}
-          />
+          <Link href='/occupancy' className='col-span-2 max-md:col-span-6'>
+            <OccupancyCard 
+              isLoading={isLoading}
+              currentOccupancy={currentOccupancy}
+            />
+          </Link>
           
           {/* Room Management Card */}
           <RoomManagementCard 
@@ -354,12 +357,13 @@ export default function Dashboard() {
           />
 
           {/* Announcement Card */}
-          <Announcement />
+          <Announcement className='order-2 md:order-1'/>
 
           {/* Occupancy Trends Card */}
           <OccupancyTrendsCard 
             isLoading={isLoading}
             chartData={chartData}
+            className='order-1 md:order-2'
           />
 
           

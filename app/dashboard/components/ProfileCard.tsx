@@ -19,7 +19,7 @@ const ProfileCard = ({ userName, userRole, avatarUrl, initials }: ProfileCardPro
   return (
     <Link 
       href="/profile" 
-      className="col-span-2 max-md:col-span-6 bg-white rounded-3xl shadow overflow-hidden h-full relative group"
+      className="col-span-2 max-md:col-span-6 bg-white rounded-3xl shadow overflow-hidden h-full relative group hover:shadow-lg transition-all duration-300"
     >
       {/* Background Image with Gradient Overlay */}
       <div className="absolute inset-0 w-full h-full">
