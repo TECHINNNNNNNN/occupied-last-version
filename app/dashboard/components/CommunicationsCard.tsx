@@ -22,7 +22,7 @@ const CommunicationsCard = ({
   communicationsLoading 
 }: CommunicationsCardProps) => {
   return (
-    <div className="sm:col-span-5 lg:col-span-4 row-span-2 col-span-7 backdrop-blur-2xl  bg-white/65 rounded-3xl  p-4 flex flex-col">
+    <div className="sm:col-span-5 max-md:col-span-12 lg:col-span-4 row-span-2 col-span-7 backdrop-blur-2xl  bg-white/65 rounded-3xl  p-4 flex flex-col">
       <h2 className="text-lg font-semibold mb-3">Recent Communications</h2>
       
       {/* Communications feed */}

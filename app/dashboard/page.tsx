@@ -307,8 +307,8 @@ export default function Dashboard() {
       */}
 
       <div className="px-3 mx-auto flex flex-col w-full h-full">
-        <div className='flex justify-between py-2 px-4'>
-          <Image src="/images/logolibrary.webp" alt="logo" width={20} height={20} className='w-10 h-10' />
+        <div className=' hidden md:flex justify-between py-2 px-4'>
+          <Image src="/images/logolibrary.webp" alt="logo" width={50} height={50} className='w-10 h-10' />
           <NavBar items={navItems} />
         </div>
 
@@ -324,7 +324,7 @@ export default function Dashboard() {
           - Using grid-rows-[auto] to adapt to content
           - 12-column layout with consistent gap
         */}
-        <div className="grid flex-1 sm:grid-cols-12 grid-cols-7  gap-4">
+        <div className="grid flex-1 sm:grid-cols-12 grid-cols-12  gap-4">
           {/* Profile Card */}
           <ProfileCard 
             userName={userName}

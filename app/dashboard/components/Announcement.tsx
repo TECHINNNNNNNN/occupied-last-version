@@ -35,7 +35,7 @@ const Announcement = () => {
 
 
   return (
-    <div className='col-span-3 bg-white/75   backdrop-blur-sm p-2  rounded-3xl '>
+    <div className='col-span-3 max-md:col-span-12 bg-white/75   backdrop-blur-sm p-2  rounded-3xl '>
         <div className='overflow-y-auto max-h-[270px] pr-2 custom-scrollbar ' >
             <h2 className='text-lg font-bold mb-1 text-gray-800 p-1'>Announcements</h2>
 
@@ -50,7 +50,7 @@ const Announcement = () => {
                     {announcements.map((announcement, index) => (
                         <div key={announcement.id} className='border-b-2 pb-2 last:border-b-0 space-y-2'>
                             <div className='flex justify-between items-start'>
-                                <h3 className='text-sm w-2/3 font-ancizar font-bold text-gray-600'>{announcement.title}</h3>
+                                <h3 className='text-sm w-2/3  font-ancizar font-bold text-gray-600'>{announcement.title}</h3>
                                 <button className='' onClick={() => toggleAnnouncement(index)}>
                                     {isOpen[index] ? <ChevronUp className='w-4 h-4 text-gray-600' /> : <ChevronDown className='w-4 h-4 text-gray-600' />}
                                 </button>

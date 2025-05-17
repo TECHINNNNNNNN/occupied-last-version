@@ -21,7 +21,7 @@ interface OccupancyCardProps {
 
 const OccupancyCard = ({ isLoading, currentOccupancy }: OccupancyCardProps) => {
   return (
-    <div className="col-span-2  bg-white/65 backdrop-blur-sm rounded-3xl  p-4 flex flex-col">
+    <div className="col-span-2 max-md:col-span-6 bg-white/65 backdrop-blur-sm rounded-3xl  p-4 flex flex-col">
       <h2 className="text-lg font-semibold mb-1">Occupancy</h2>
       
       {/* Simplified Occupancy Display */}

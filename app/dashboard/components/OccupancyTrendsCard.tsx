@@ -26,7 +26,7 @@ interface OccupancyTrendsCardProps {
 
 const OccupancyTrendsCard = ({ isLoading, chartData }: OccupancyTrendsCardProps) => {
   return (
-    <div className="col-span-5 col-start-4 bg-white/65 backdrop-blur-sm p-2  rounded-3xl  flex flex-col min-h-[300px]">
+    <div className="col-span-5 max-md:col-span-12 col-start-4 bg-white/65 backdrop-blur-sm p-2  rounded-3xl  flex flex-col min-h-[300px]">
       <h2 className="text-lg font-semibold mb-1 text-gray-800 p-1">Occupancy Trends</h2>
       
       {isLoading || chartData.length === 0 ? (
