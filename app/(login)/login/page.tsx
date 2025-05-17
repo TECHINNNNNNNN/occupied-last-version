@@ -187,7 +187,7 @@ export default function LoginPage() {
           </Card>
         </div>
         <div className='col-span-2 md:col-span-1 hidden md:flex bg-login-containerRight rounded-3xl items-center justify-center'>
-          <Image src="/images/plainlibrary.webp" alt="login-image" width={650} height={650} className='rounded-3xl hover:scale-95 transition-all duration-300'/>
+          <Image src="/images/colorfulEngineeringlibrary.webp" alt="login-image" width={650} height={650} className='rounded-3xl hover:scale-95 transition-all duration-300'/>
         </div>
       </div>
 

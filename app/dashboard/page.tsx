@@ -309,7 +309,7 @@ export default function Dashboard() {
 
       <div className="px-3 mx-auto flex flex-col w-full h-full">
         <div className=' hidden md:flex justify-between py-2 px-4'>
-          <Image src="/images/logolibrary.webp" alt="logo" width={50} height={50} className='w-10 h-10' />
+          <Image src="/images/logolibrary.webp" alt="logo" width={50} height={50} className='w-10 h-10 animate-bounce' />
           <NavBar items={navItems} />
         </div>
 
