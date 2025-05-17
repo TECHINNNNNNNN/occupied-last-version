@@ -8,13 +8,13 @@
 // This layout now conditionally renders a BackButton at the top of all pages except the dashboard.
 // ----------------------------------------------------------------------------
 
-import type { Metadata } from "next";
+
 import { Geist, Geist_Mono } from "next/font/google";
 import "../../globals.css";
 import { Inter } from 'next/font/google'
-import { AuthProvider } from "@/contexts/AuthContext";
 
-import { Toaster } from "@/components/ui/sonner"
+
+
 // Import BackButton and usePathname for navigation logic
 import localFont from 'next/font/local';
 

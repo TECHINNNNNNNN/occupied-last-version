@@ -50,7 +50,10 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: "Library Management System",
-  description: "Library Management System",
+  description: "Engineering Library Management System",
+  icons: {
+    icon: '/logolibrary.svg'
+  }
 };
 
 // RootLayout wraps all pages. Conditionally renders BackButton except on /dashboard.
