@@ -26,7 +26,7 @@ import { BackButton } from './BackButton'
  */
 export function BackButtonWrapper() {
   const pathname = usePathname()
-  const isDashboard = pathname === '/dashboard' || pathname === '/dashboard/'
+  const isDashboard = pathname === '/dashboard' || pathname === '/dashboard/' || pathname === '/login' || pathname === '/login/'
   if (isDashboard) return null
   return (
     <div className='absolute top-4 left-4 bg-transparent'>
