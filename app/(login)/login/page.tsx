@@ -73,9 +73,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen  bg-login-bg p-5">
-      <div className='grid grid-cols-2 w-full gap-5'>
+      <div className='grid grid-cols-2 w-full gap-5 font-ancizar'>
         <div className='col-span-2 md:col-span-1  flex flex-col items-center justify-center  rounded-3xl'>
-          <Image src="/images/logolibrary.webp" alt="logo" width={75} height={75} />
+          <Image src="/images/logolibrary.webp" alt="logo" width={75} height={75} className='animate-bounce'/>
           <h1 className='text-3xl text-gray-600 font-bold text-center mb-6 font-ancizar'>
             <span className='text-5xl'>Effortlessly</span> <br /> manage your library space
           </h1>
@@ -187,7 +187,7 @@ export default function LoginPage() {
           </Card>
         </div>
         <div className='col-span-2 md:col-span-1 hidden md:flex bg-login-containerRight rounded-3xl items-center justify-center'>
-          <Image src="/images/plainlibrary.webp" alt="login-image" width={650} height={650} className='rounded-3xl'/>
+          <Image src="/images/plainlibrary.webp" alt="login-image" width={650} height={650} className='rounded-3xl hover:scale-105 transition-all duration-300'/>
         </div>
       </div>
 
